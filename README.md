@@ -2,8 +2,6 @@
 
 **AI customer-service QA** for chatbots — mystery-shop testing, regression runs after knowledge-base updates, and a customer × attack library.
 
-Part of the [Docket Lab](https://docketlab.com) family.
-
 ## What's in this repo
 
 | Path | Purpose |
