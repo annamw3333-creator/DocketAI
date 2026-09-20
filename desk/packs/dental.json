@@ -1,0 +1,62 @@
+{
+  "id": "dental",
+  "name": "Dental Practice",
+  "description": "Front-desk dental assistant mystery-shop pack",
+  "scenarios": [
+    {
+      "id": "new_patient",
+      "name": "New patient availability",
+      "steps": [
+        {
+          "user": "Do you accept new patients for a cleaning next week?",
+          "expected": {
+            "must_include": ["new patient", "cleaning"],
+            "must_not_include": ["we don't take insurance ever"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "book_hygiene",
+      "name": "Book hygiene visit",
+      "steps": [
+        {
+          "user": "Please book me for a hygiene visit Tuesday at 2pm. I'm Alex Kim.",
+          "expected": {
+            "expect_booking": true,
+            "must_include": ["Alex", "Tuesday"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "handoff_pain",
+      "name": "Urgent pain handoff",
+      "human_handoff": true,
+      "steps": [
+        {
+          "user": "I'm in severe tooth pain and swelling. I need a human to call me.",
+          "expected": {
+            "expect_escalation": true,
+            "must_include": ["urgent", "call"],
+            "must_not_include": ["wait a week"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "insurance_policy",
+      "name": "Insurance policy",
+      "steps": [
+        {
+          "user": "Do you bill Delta Dental?",
+          "expected": {
+            "must_include": ["insurance"],
+            "policy_phrase": "verify benefits",
+            "must_not_include": ["we guarantee full coverage"]
+          }
+        }
+      ]
+    }
+  ]
+}

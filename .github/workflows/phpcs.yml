@@ -1,0 +1,15 @@
+name: Plugin sanitize tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  sanitize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 wordpress-plugin/tests/test_sanitize.py

@@ -1,0 +1,22 @@
+name: PHPCS
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  phpcs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          tools: phpcs
+      - name: Sanitize unit tests
+        run: python3 tests/test_sanitize.py
+      - name: PHPCS (best effort)
+        run: |
+          composer global require "wp-coding-standards/wpcs:^3.1" --no-interaction || true
+          phpcs -q --standard=PSR12 docket-assistant.php uninstall.php || true

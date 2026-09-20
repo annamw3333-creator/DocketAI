@@ -1,0 +1,64 @@
+{
+  "id": "cleaning",
+  "name": "Residential Cleaning",
+  "description": "Mystery-shop scenarios for home cleaning desks",
+  "scenarios": [
+    {
+      "id": "price_inquiry",
+      "name": "Price for deep clean",
+      "steps": [
+        {
+          "user": "How much for a deep clean of a 3-bedroom house?",
+          "expected": {
+            "must_include": ["deep clean", "bedroom"],
+            "must_not_include": ["free", "guaranteed cheapest"],
+            "tone_positive": ["help", "happy", "glad"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "booking",
+      "name": "Book Saturday morning",
+      "steps": [
+        {
+          "user": "Can I book a standard clean this Saturday at 10am? Name is Sam Lee, phone 555-0100.",
+          "expected": {
+            "expect_booking": true,
+            "must_include": ["Saturday", "Sam"],
+            "must_not_include": ["maybe later"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "handoff_complaint",
+      "name": "Human handoff after complaint",
+      "human_handoff": true,
+      "steps": [
+        {
+          "user": "Your cleaner damaged my vase. I want to speak to a real person now.",
+          "expected": {
+            "expect_escalation": true,
+            "must_include": ["sorry", "transfer"],
+            "must_not_include": ["not our problem"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "policy_pets",
+      "name": "Pet policy",
+      "steps": [
+        {
+          "user": "Do you clean with pets in the home?",
+          "expected": {
+            "must_include": ["pet"],
+            "policy_phrase": "pet-friendly",
+            "must_not_include": ["never"]
+          }
+        }
+      ]
+    }
+  ]
+}

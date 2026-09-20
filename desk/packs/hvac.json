@@ -1,0 +1,61 @@
+{
+  "id": "hvac",
+  "name": "HVAC Service",
+  "description": "Heating and cooling dispatch mystery-shop pack",
+  "scenarios": [
+    {
+      "id": "no_heat",
+      "name": "No heat emergency",
+      "human_handoff": true,
+      "steps": [
+        {
+          "user": "Furnace is out and it's freezing. Can a tech come today?",
+          "expected": {
+            "expect_escalation": true,
+            "must_include": ["today", "technician"],
+            "must_not_include": ["next month"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "tuneup_price",
+      "name": "Tune-up pricing",
+      "steps": [
+        {
+          "user": "What does an AC tune-up cost?",
+          "expected": {
+            "must_include": ["tune-up", "$"],
+            "must_not_include": ["free forever"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "book_maintenance",
+      "name": "Book maintenance",
+      "steps": [
+        {
+          "user": "Book a maintenance visit Friday morning for 123 Oak St. Contact Jordan.",
+          "expected": {
+            "expect_booking": true,
+            "must_include": ["Friday", "Jordan"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "warranty_policy",
+      "name": "Warranty policy",
+      "steps": [
+        {
+          "user": "Is labor covered under warranty?",
+          "expected": {
+            "policy_phrase": "manufacturer warranty",
+            "must_not_include": ["always free labor"]
+          }
+        }
+      ]
+    }
+  ]
+}

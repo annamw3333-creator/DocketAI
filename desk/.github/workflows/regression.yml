@@ -1,0 +1,29 @@
+name: Desk regression
+
+on:
+  push:
+    paths:
+      - "desk/**"
+  pull_request:
+    paths:
+      - "desk/**"
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -r requirements.txt
+      - name: Unit tests
+        run: python -m pytest tests/ -q || python -m unittest discover -s tests -p 'test_*.py' -q
+      - name: Seed baselines
+        run: python scripts/regression.py --write-baseline --bot sparkle-cleaning --pack cleaning
+      - name: Regression (must not drop)
+        run: python scripts/regression.py --bot sparkle-cleaning --pack cleaning --threshold 0

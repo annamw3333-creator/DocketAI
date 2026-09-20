@@ -1,0 +1,61 @@
+{
+  "id": "salon",
+  "name": "Hair Salon",
+  "description": "Salon booking and policy mystery-shop pack",
+  "scenarios": [
+    {
+      "id": "color_price",
+      "name": "Color pricing",
+      "steps": [
+        {
+          "user": "How much for a full color and cut?",
+          "expected": {
+            "must_include": ["color", "cut"],
+            "must_not_include": ["cheapest in town guarantee"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "book_appointment",
+      "name": "Book stylist",
+      "steps": [
+        {
+          "user": "I'd like an appointment with Mia Saturday at noon for a blowout. I'm Riley.",
+          "expected": {
+            "expect_booking": true,
+            "must_include": ["Mia", "Saturday", "Riley"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "handoff_allergic",
+      "name": "Allergic reaction handoff",
+      "human_handoff": true,
+      "steps": [
+        {
+          "user": "I had a reaction to dye yesterday. I need to talk to the manager immediately.",
+          "expected": {
+            "expect_escalation": true,
+            "must_include": ["manager", "sorry"],
+            "must_not_include": ["your fault"]
+          }
+        }
+      ]
+    },
+    {
+      "id": "cancel_policy",
+      "name": "Cancellation policy",
+      "steps": [
+        {
+          "user": "What's your cancellation policy?",
+          "expected": {
+            "policy_phrase": "24 hours",
+            "must_not_include": ["no cancellations ever"]
+          }
+        }
+      ]
+    }
+  ]
+}
