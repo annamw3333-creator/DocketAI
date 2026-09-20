@@ -1,0 +1,95 @@
+import React, { useCallback, useState } from "react";
+import { TextInput, Text, StyleSheet } from "react-native";
+import { useFocusEffect } from "expo-router";
+import { Screen, Title, Subtitle, Card, Button, Badge, ErrorBox } from "@/src/components";
+import { DEFAULT_API_URL, getApiUrl, setApiUrl } from "@/src/settings";
+import { fetchHealth } from "@/src/api";
+import { colors, spacing } from "@/src/theme";
+
+export default function SettingsScreen() {
+  const [url, setUrl] = useState(DEFAULT_API_URL);
+  const [saved, setSaved] = useState(false);
+  const [ping, setPing] = useState<"idle" | "ok" | "err">("idle");
+  const [msg, setMsg] = useState("");
+
+  useFocusEffect(
+    useCallback(() => {
+      getApiUrl().then(setUrl);
+      setSaved(false);
+      setPing("idle");
+    }, [])
+  );
+
+  const onSave = async () => {
+    await setApiUrl(url);
+    setSaved(true);
+    setPing("idle");
+  };
+
+  const onTest = async () => {
+    await setApiUrl(url);
+    try {
+      const h = await fetchHealth();
+      setPing("ok");
+      setMsg(`${h.service || "ok"} · ${h.status}`);
+    } catch (e: any) {
+      setPing("err");
+      setMsg(e?.message || "Unreachable");
+    }
+  };
+
+  return (
+    <Screen>
+      <Title>Settings</Title>
+      <Subtitle>Point DocketAI at your Docket Desk API (LAN IP, ngrok, or emulator loopback).</Subtitle>
+
+      <Card>
+        <Text style={styles.label}>API URL</Text>
+        <TextInput
+          value={url}
+          onChangeText={(t) => {
+            setUrl(t);
+            setSaved(false);
+          }}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          placeholder={DEFAULT_API_URL}
+          placeholderTextColor={colors.muted}
+          style={styles.input}
+        />
+        <Text style={styles.hint}>
+          Emulator → host: http://10.0.2.2:8080 · Physical device → http://&lt;desk-lan-ip&gt;:8080
+        </Text>
+        <Button title="Save" onPress={onSave} />
+        <Button title="Test /health" onPress={onTest} variant="ghost" />
+        {saved ? <Badge label="Saved" tone="ok" /> : null}
+        {ping === "ok" ? <Badge label={`OK · ${msg}`} tone="ok" /> : null}
+        {ping === "err" ? <ErrorBox message={msg} /> : null}
+      </Card>
+
+      <Card>
+        <Text style={styles.label}>App</Text>
+        <Text style={styles.meta}>DocketAI 1.0.0 · com.docketai.app</Text>
+        <Text style={styles.meta}>JS embedded in APK (no Metro required for sideload).</Text>
+      </Card>
+    </Screen>
+  );
+}
+
+const styles = StyleSheet.create({
+  label: { color: colors.text, fontWeight: "700", fontSize: 15, marginBottom: spacing.xs },
+  input: {
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    color: colors.text,
+    fontSize: 14,
+    marginBottom: spacing.sm,
+  },
+  hint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.sm },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 4 },
+});

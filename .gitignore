@@ -6,3 +6,12 @@ node_modules/
 android/app/build/
 *.apk
 desk/data/*.db
+mobile/node_modules/
+mobile/.expo/
+mobile/android/app/build/
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/.cxx/
+*.apk
+!mobile/README.md
+**/local.properties

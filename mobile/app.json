@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "DocketAI",
+    "slug": "docketai",
+    "version": "1.0.0",
+    "description": "DocketAI — mystery-shop QA for customer-service chatbots.",
+    "primaryColor": "#14B8A6",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "docketai",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.docketai.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.docketai.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#0B1F33"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B1F33"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
