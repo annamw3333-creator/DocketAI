@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Text, StyleSheet, View } from "react-native";
 import { Screen, Title, Subtitle, Card, Badge, Button } from "@/src/components";
 import { PERSONAS, ATTACKS, PersonaId, AttackId } from "@/src/library";
-import { colors, spacing } from "@/src/theme";
+import { colors, spacing, type } from "@/src/theme";
 
 export default function LibraryScreen() {
   const [persona, setPersona] = useState<PersonaId | null>(null);
@@ -51,7 +51,7 @@ export default function LibraryScreen() {
         <Card>
           <Text style={styles.cardTitle}>Selected pair</Text>
           <View style={styles.badges}>
-            <Badge label={persona ? PERSONAS.find((p) => p.id === persona)!.label : "Pick persona"} tone={persona ? "teal" : "muted"} />
+            <Badge label={persona ? PERSONAS.find((p) => p.id === persona)!.label : "Pick persona"} tone={persona ? "gold" : "muted"} />
             <Badge label={attack ? ATTACKS.find((a) => a.id === attack)!.label : "Pick attack"} tone={attack ? "warn" : "muted"} />
           </View>
           {pair ? (
@@ -72,8 +72,8 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   modeRow: { gap: 4, marginBottom: spacing.sm },
-  cardTitle: { color: colors.text, fontWeight: "600", fontSize: 15 },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 4, lineHeight: 18 },
+  cardTitle: { color: colors.text, fontWeight: type.labelWeight, fontSize: 15, letterSpacing: type.letterSpacing },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 4, lineHeight: 20, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
   badges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginVertical: spacing.sm },
-  hint: { color: colors.tealDim, fontSize: 12, marginTop: spacing.md, lineHeight: 17 },
+  hint: { color: colors.goldDim, fontSize: 12, marginTop: spacing.md, lineHeight: 18, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
 });

@@ -4,7 +4,7 @@ import { useFocusEffect } from "expo-router";
 import { Screen, Title, Subtitle, Card, Button, Badge, ErrorBox } from "@/src/components";
 import { DEFAULT_API_URL, getApiUrl, setApiUrl } from "@/src/settings";
 import { fetchHealth } from "@/src/api";
-import { colors, spacing } from "@/src/theme";
+import { colors, spacing, type } from "@/src/theme";
 
 export default function SettingsScreen() {
   const [url, setUrl] = useState(DEFAULT_API_URL);
@@ -70,7 +70,7 @@ export default function SettingsScreen() {
 
       <Card>
         <Text style={styles.label}>App</Text>
-        <Text style={styles.meta}>DocketAI 1.0.0 · com.docketai.app</Text>
+        <Text style={styles.meta}>DocketAI 1.1.0 · com.docketai.app</Text>
         <Text style={styles.meta}>JS embedded in APK (no Metro required for sideload).</Text>
       </Card>
     </Screen>
@@ -78,18 +78,20 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  label: { color: colors.text, fontWeight: "700", fontSize: 15, marginBottom: spacing.xs },
+  label: { color: colors.text, fontWeight: type.mediumWeight, fontSize: 15, marginBottom: spacing.xs, letterSpacing: type.letterSpacing },
   input: {
     backgroundColor: colors.bg,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    borderRadius: 10,
+    borderRadius: 2,
     paddingHorizontal: 12,
     paddingVertical: 12,
     color: colors.text,
     fontSize: 14,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
     marginBottom: spacing.sm,
   },
-  hint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginBottom: spacing.sm },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 4 },
+  hint: { color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: spacing.sm, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
+  meta: { color: colors.muted, fontSize: 13, marginTop: 4, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
 });

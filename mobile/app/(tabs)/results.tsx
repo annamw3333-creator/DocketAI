@@ -3,7 +3,7 @@ import { Text, StyleSheet } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { Screen, Title, Subtitle, Card, Loading, ErrorBox, Badge, ScoreBar, Button } from "@/src/components";
 import { fetchRuns, RunSummary } from "@/src/api";
-import { colors, spacing } from "@/src/theme";
+import { colors, spacing, type } from "@/src/theme";
 
 export default function ResultsScreen() {
   const [runs, setRuns] = useState<RunSummary[]>([]);
@@ -50,7 +50,7 @@ export default function ResultsScreen() {
               bot {r.bot_id} · {r.created_at || "—"}
             </Text>
             {overall != null ? (
-              <Badge label={`Overall ${Math.round(Number(overall))}%`} tone="teal" />
+              <Badge label={`Overall ${Math.round(Number(overall))}%`} tone="gold" />
             ) : (
               <Badge label="No scores" tone="muted" />
             )}
@@ -69,8 +69,8 @@ export default function ResultsScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontWeight: "700", fontSize: 16, marginBottom: 2 },
-  meta: { color: colors.muted, fontSize: 12, marginBottom: spacing.sm },
-  empty: { color: colors.muted },
-  id: { color: colors.border, fontSize: 10, marginTop: spacing.sm, fontFamily: "monospace" },
+  title: { color: colors.text, fontWeight: type.mediumWeight, fontSize: 16, marginBottom: 2, letterSpacing: type.letterSpacing },
+  meta: { color: colors.muted, fontSize: 12, marginBottom: spacing.sm, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
+  empty: { color: colors.muted, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
+  id: { color: colors.muted, fontSize: 10, marginTop: spacing.sm, fontFamily: "monospace", letterSpacing: type.letterSpacing },
 });

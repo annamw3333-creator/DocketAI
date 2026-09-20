@@ -8,7 +8,7 @@ import {
   ScrollView,
   ViewStyle,
 } from "react-native";
-import { colors, spacing } from "./theme";
+import { colors, spacing, type } from "./theme";
 
 export function Screen({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
   return (
@@ -50,7 +50,13 @@ export function Card({
   return inner;
 }
 
-export function Badge({ label, tone = "teal" }: { label: string; tone?: "teal" | "warn" | "ok" | "danger" | "muted" }) {
+export function Badge({
+  label,
+  tone = "gold",
+}: {
+  label: string;
+  tone?: "gold" | "warn" | "ok" | "danger" | "muted";
+}) {
   const bg =
     tone === "warn"
       ? colors.warn
@@ -60,8 +66,8 @@ export function Badge({ label, tone = "teal" }: { label: string; tone?: "teal" |
           ? colors.danger
           : tone === "muted"
             ? colors.border
-            : colors.teal;
-  const fg = tone === "muted" ? colors.text : colors.navy;
+            : colors.gold;
+  const fg = tone === "muted" ? colors.text : colors.black;
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
       <Text style={[styles.badgeText, { color: fg }]}>{label}</Text>
@@ -98,7 +104,7 @@ export function Button({
 export function Loading({ label = "Loading…" }: { label?: string }) {
   return (
     <View style={styles.loading}>
-      <ActivityIndicator color={colors.teal} />
+      <ActivityIndicator color={colors.gold} />
       <Text style={styles.muted}>{label}</Text>
     </View>
   );
@@ -130,43 +136,96 @@ export function ScoreBar({ label, value }: { label: string; value: number }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   screenContent: { padding: spacing.md, paddingBottom: spacing.xl * 2 },
-  title: { color: colors.text, fontSize: 26, fontWeight: "700", marginBottom: 4 },
-  subtitle: { color: colors.muted, fontSize: 14, marginBottom: spacing.md, lineHeight: 20 },
+  title: {
+    color: colors.text,
+    fontSize: 28,
+    fontWeight: type.titleWeight,
+    letterSpacing: type.letterSpacing + 0.4,
+    marginBottom: 6,
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+    marginBottom: spacing.md,
+    lineHeight: 22,
+  },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 14,
+    borderRadius: 4,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  cardSelected: { borderColor: colors.teal, backgroundColor: colors.surfaceAlt },
-  badge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
-  badgeText: { fontSize: 11, fontWeight: "700" },
+  cardSelected: {
+    borderColor: colors.gold,
+    backgroundColor: colors.surfaceAlt,
+  },
+  badge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 2,
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: type.mediumWeight,
+    letterSpacing: type.letterSpacing,
+  },
   btn: {
-    backgroundColor: colors.teal,
+    backgroundColor: colors.gold,
     paddingVertical: 14,
     paddingHorizontal: 18,
-    borderRadius: 12,
+    borderRadius: 2,
     alignItems: "center",
     marginTop: spacing.sm,
   },
-  btnGhost: { backgroundColor: "transparent", borderWidth: 1, borderColor: colors.border },
-  btnText: { color: colors.navy, fontWeight: "700", fontSize: 15 },
+  btnGhost: {
+    backgroundColor: "transparent",
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+  },
+  btnText: {
+    color: colors.black,
+    fontWeight: type.mediumWeight,
+    fontSize: 14,
+    letterSpacing: type.letterSpacing + 0.4,
+  },
   btnTextGhost: { color: colors.text },
   loading: { alignItems: "center", gap: 10, padding: spacing.lg },
-  muted: { color: colors.muted, fontSize: 13 },
+  muted: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+  },
   error: {
-    backgroundColor: "#3B1A1A",
+    backgroundColor: "#1A0A0A",
     borderColor: colors.danger,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: spacing.md,
-    borderRadius: 12,
+    borderRadius: 4,
     marginBottom: spacing.sm,
   },
-  errorText: { color: colors.danger, fontSize: 13 },
+  errorText: {
+    color: colors.danger,
+    fontSize: 13,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+  },
   rowBetween: { flexDirection: "row", justifyContent: "space-between", marginBottom: 4 },
-  scoreNum: { color: colors.teal, fontWeight: "700" },
-  barTrack: { height: 8, backgroundColor: colors.border, borderRadius: 4, overflow: "hidden" },
-  barFill: { height: 8, backgroundColor: colors.teal, borderRadius: 4 },
+  scoreNum: {
+    color: colors.gold,
+    fontWeight: type.mediumWeight,
+    letterSpacing: type.letterSpacing,
+  },
+  barTrack: {
+    height: 2,
+    backgroundColor: colors.border,
+    borderRadius: 0,
+    overflow: "hidden",
+  },
+  barFill: { height: 2, backgroundColor: colors.gold, borderRadius: 0 },
 });

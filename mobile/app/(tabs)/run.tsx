@@ -13,7 +13,7 @@ import {
   Badge,
 } from "@/src/components";
 import { fetchBots, fetchPacks, runMysteryShop, setBaseline, fetchBaseline, Pack } from "@/src/api";
-import { colors, spacing } from "@/src/theme";
+import { colors, spacing, type } from "@/src/theme";
 
 export default function RunScreen() {
   const [packs, setPacks] = useState<Pack[]>([]);
@@ -130,7 +130,7 @@ export default function RunScreen() {
             <Text style={styles.meta}>before</Text>
           </View>
           <View style={styles.compareCol}>
-            <Badge label="Re-check" tone="teal" />
+            <Badge label="Re-check" tone="gold" />
             <Text style={styles.bigPct}>{recheckPct != null ? `${Math.round(recheckPct)}%` : "—"}</Text>
             <Text style={styles.meta}>after</Text>
           </View>
@@ -157,10 +157,10 @@ export default function RunScreen() {
 }
 
 const styles = StyleSheet.create({
-  section: { color: colors.text, fontWeight: "700", fontSize: 15, marginTop: spacing.md, marginBottom: spacing.xs },
-  cardTitle: { color: colors.text, fontWeight: "600", fontSize: 15 },
-  meta: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  section: { color: colors.text, fontWeight: type.mediumWeight, fontSize: 15, marginTop: spacing.md, marginBottom: spacing.xs, letterSpacing: type.letterSpacing },
+  cardTitle: { color: colors.text, fontWeight: type.labelWeight, fontSize: 15, letterSpacing: type.letterSpacing },
+  meta: { color: colors.muted, fontSize: 12, marginTop: 2, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
   compareRow: { flexDirection: "row", justifyContent: "space-between", marginTop: spacing.sm, marginBottom: spacing.md },
   compareCol: { flex: 1, alignItems: "center", gap: 6 },
-  bigPct: { color: colors.text, fontSize: 28, fontWeight: "800" },
+  bigPct: { color: colors.text, fontSize: 28, fontWeight: type.mediumWeight, letterSpacing: type.letterSpacing },
 });

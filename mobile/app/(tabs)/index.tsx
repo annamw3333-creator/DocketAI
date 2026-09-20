@@ -4,7 +4,7 @@ import { useFocusEffect, router } from "expo-router";
 import { Screen, Title, Subtitle, Card, Badge, Button, Loading } from "@/src/components";
 import { fetchHealth, fetchPacks, fetchBots } from "@/src/api";
 import { PERSONAS, ATTACKS } from "@/src/library";
-import { colors, spacing } from "@/src/theme";
+import { colors, spacing, type } from "@/src/theme";
 import { getApiUrl } from "@/src/settings";
 
 export default function HomeScreen() {
@@ -85,9 +85,9 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-  label: { color: colors.text, fontWeight: "700", fontSize: 16 },
-  mono: { color: colors.teal, fontFamily: "monospace", fontSize: 12, marginBottom: 8 },
-  meta: { color: colors.muted, fontSize: 13, lineHeight: 18 },
-  err: { color: colors.danger, fontSize: 13, marginTop: 6 },
-  section: { color: colors.text, fontWeight: "700", fontSize: 16, marginBottom: spacing.xs },
+  label: { color: colors.text, fontWeight: type.mediumWeight, fontSize: 16, letterSpacing: type.letterSpacing },
+  mono: { color: colors.gold, fontFamily: "monospace", fontSize: 12, marginBottom: 8, letterSpacing: type.letterSpacing },
+  meta: { color: colors.muted, fontSize: 13, lineHeight: 20, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
+  err: { color: colors.danger, fontSize: 13, marginTop: 6, letterSpacing: type.letterSpacing },
+  section: { color: colors.text, fontWeight: type.mediumWeight, fontSize: 16, marginBottom: spacing.xs, letterSpacing: type.letterSpacing },
 });
