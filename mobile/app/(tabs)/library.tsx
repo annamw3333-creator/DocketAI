@@ -21,9 +21,7 @@ export default function LibraryScreen() {
   return (
     <Screen>
       <Title>Library</Title>
-      <Subtitle>
-        {PERSONAS.length} personas · {ATTACKS.length} attacks
-      </Subtitle>
+      <Subtitle>Browse stress lenses. Pairing on Run actually filters pack scenarios server-side.</Subtitle>
 
       <View style={styles.modeRow}>
         {(["personas", "attacks", "pair"] as Mode[]).map((m) => (

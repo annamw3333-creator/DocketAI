@@ -207,18 +207,24 @@ def run_pack_on_bot(
     bot: dict[str, Any],
     pack: dict[str, Any],
     replies: dict[str, str] | None = None,
+    persona_id: str | None = None,
+    attack_id: str | None = None,
 ) -> dict[str, Any]:
     """
-    Run all scenarios. Optional replies map scenario_id -> assistant text
+    Run scenarios (optionally shaped by persona × attack lens).
+    Optional replies map scenario_id -> assistant text
     (for testing external bots). Otherwise uses simulate_reply.
     """
+    from .lens import shape_pack_for_lens
+
+    shaped_pack, lens_meta = shape_pack_for_lens(pack, persona_id, attack_id)
     replies = replies or {}
     transcript: list[dict[str, str]] = []
     step_scores: list[dict[str, float]] = []
     scenarios_out: list[dict[str, Any]] = []
     failures: list[dict[str, Any]] = []
 
-    for sc in pack.get("scenarios") or []:
+    for sc in shaped_pack.get("scenarios") or []:
         steps = sc.get("steps") or []
         if not steps:
             continue
@@ -251,6 +257,9 @@ def run_pack_on_bot(
                 "reasons": verdict["reasons"],
                 "suggested_fixes": verdict["suggested_fixes"],
                 "overall": verdict["overall"],
+                "personas": sc.get("personas") or [],
+                "attacks": sc.get("attacks") or [],
+                "lens": sc.get("lens"),
             }
         )
         # lightweight failure flags
@@ -275,4 +284,8 @@ def run_pack_on_bot(
         "diff": diff,
         "patches": patches,
         "failures": failures,
+        "lens": lens_meta,
+        "persona_id": lens_meta.get("persona_id"),
+        "attack_id": lens_meta.get("attack_id"),
+        "scenario_count": len(scenarios_out),
     }

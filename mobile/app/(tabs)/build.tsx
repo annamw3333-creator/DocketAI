@@ -205,12 +205,35 @@ export default function BuildBotScreen() {
     setTimeout(() => setCopied((c) => (c === key ? null : c)), 1600);
   };
 
+  const onPreviewDraft = async () => {
+    setBusy(true);
+    setError(null);
+    setNote(null);
+    try {
+      const res = await createBotFromBrand({
+        website_url: url.trim(),
+        brand_notes: notes.trim(),
+        name: name.trim() || undefined,
+        create: false,
+        theme_id: selectedThemeId,
+      });
+      setDraft(res.draft);
+      setBotId(null);
+      setNote(
+        res.note ||
+          "[DRAFT] Template only — preview below. Save when ready; review before production."
+      );
+      if (res.draft?.name && !displayName) setDisplayName(res.draft.name);
+    } catch (e: any) {
+      setError(e?.message || "Draft preview failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onBuild = async () => {
     setBusy(true);
     setError(null);
-    setDraft(null);
-    setBotId(null);
-    setNote(null);
     setEmbedSnippet(null);
     try {
       const res = await createBotFromBrand({
@@ -222,7 +245,10 @@ export default function BuildBotScreen() {
       });
       setDraft(res.draft);
       setBotId(res.bot?.id || null);
-      setNote(res.note || "Draft prompt — review before production use.");
+      setNote(
+        res.note ||
+          "[DRAFT] Prompt and FAQ are templates — review before production use."
+      );
       if (res.draft?.name && !displayName) setDisplayName(res.draft.name);
       await refreshLists();
     } catch (e: any) {
@@ -331,7 +357,13 @@ export default function BuildBotScreen() {
           style={styles.input}
         />
         <Button
-          title={busy ? "Building…" : "Generate draft bot"}
+          title={busy ? "Working…" : "Preview [DRAFT] prompt"}
+          onPress={onPreviewDraft}
+          disabled={busy || url.trim().length < 8}
+          variant="ghost"
+        />
+        <Button
+          title={busy ? "Saving…" : "Create bot from brand"}
           onPress={onBuild}
           disabled={busy || url.trim().length < 8}
         />
@@ -341,10 +373,10 @@ export default function BuildBotScreen() {
 
       {draft ? (
         <>
-          <SectionLabel>Draft preview</SectionLabel>
+          <SectionLabel>[DRAFT] prompt preview</SectionLabel>
           <Card>
             <View style={styles.row}>
-              <Badge label="Draft" tone="gold" />
+              <Badge label="[DRAFT]" tone="gold" />
               {botId ? <Badge label="Saved" tone="ok" /> : null}
             </View>
             <Text style={styles.cardTitle}>{draft.name}</Text>
@@ -358,7 +390,7 @@ export default function BuildBotScreen() {
             ) : null}
           </Card>
 
-          <SectionLabel>System prompt</SectionLabel>
+          <SectionLabel>[DRAFT] system prompt</SectionLabel>
           <Card>
             <Text style={styles.mono}>{draft.prompt}</Text>
             <Button
@@ -368,7 +400,7 @@ export default function BuildBotScreen() {
             />
           </Card>
 
-          <SectionLabel>FAQ ({draft.faq?.length || 0})</SectionLabel>
+          <SectionLabel>[DRAFT] FAQ ({draft.faq?.length || 0})</SectionLabel>
           {(draft.faq || []).slice(0, 6).map((f, i) => (
             <Card key={i}>
               <Text style={styles.cardTitle}>{f.question}</Text>
@@ -412,7 +444,7 @@ export default function BuildBotScreen() {
         {targetBotId ? <Text style={styles.meta}>Active: {targetBotId}</Text> : null}
       </Card>
 
-      <SectionLabel>Presets ({themes.length})</SectionLabel>
+      <SectionLabel>Theme presets ({themes.length || 8})</SectionLabel>
       <View style={styles.themeGrid}>
         {themes.map((t) => {
           const tid = t.id || t.theme_id || "";

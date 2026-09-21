@@ -41,6 +41,7 @@ def init_db() -> None:
                 diff_json TEXT NOT NULL DEFAULT '{}',
                 patches_json TEXT NOT NULL DEFAULT '[]',
                 scenarios_json TEXT NOT NULL DEFAULT '[]',
+                meta_json TEXT NOT NULL DEFAULT '{}',
                 created_at TEXT NOT NULL,
                 FOREIGN KEY (bot_id) REFERENCES bots(id)
             );
@@ -67,6 +68,10 @@ def init_db() -> None:
         if "theme_json" not in cols_bots:
             conn.execute(
                 "ALTER TABLE bots ADD COLUMN theme_json TEXT NOT NULL DEFAULT '{}'"
+            )
+        if "meta_json" not in cols_runs:
+            conn.execute(
+                "ALTER TABLE runs ADD COLUMN meta_json TEXT NOT NULL DEFAULT '{}'"
             )
 
 
@@ -167,12 +172,13 @@ def save_run(
     patches: list[str],
     scenarios: list[dict[str, Any]] | None = None,
     scenario_id: str | None = None,
+    meta: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     rid = str(uuid.uuid4())
     with connect() as conn:
         conn.execute(
-            """INSERT INTO runs (id, bot_id, pack_id, scenario_id, scores_json, transcript_json, diff_json, patches_json, scenarios_json, created_at)
-               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            """INSERT INTO runs (id, bot_id, pack_id, scenario_id, scores_json, transcript_json, diff_json, patches_json, scenarios_json, meta_json, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
             (
                 rid,
                 bot_id,
@@ -183,6 +189,7 @@ def save_run(
                 json.dumps(diff),
                 json.dumps(patches),
                 json.dumps(scenarios or []),
+                json.dumps(meta or {}),
                 _utc_now(),
             ),
         )
@@ -200,6 +207,17 @@ def get_run(run_id: str) -> dict[str, Any] | None:
     d["diff"] = json.loads(d.pop("diff_json"))
     d["patches"] = json.loads(d.pop("patches_json"))
     d["scenarios"] = json.loads(d.pop("scenarios_json") or "[]")
+    raw_meta = d.pop("meta_json", None) or "{}"
+    try:
+        d["meta"] = json.loads(raw_meta)
+    except json.JSONDecodeError:
+        d["meta"] = {}
+    if not isinstance(d["meta"], dict):
+        d["meta"] = {}
+    # Convenience top-level lens fields for mobile Results
+    d["persona_id"] = d["meta"].get("persona_id")
+    d["attack_id"] = d["meta"].get("attack_id")
+    d["lens"] = d["meta"].get("lens") or d["meta"]
     return d
 
 
@@ -223,6 +241,16 @@ def list_runs(bot_id: str | None = None, limit: int = 50) -> list[dict[str, Any]
         d["patches"] = json.loads(d.pop("patches_json"))
         raw_sc = d.pop("scenarios_json", "[]") or "[]"
         d["scenarios"] = json.loads(raw_sc)
+        raw_meta = d.pop("meta_json", None) or "{}"
+        try:
+            d["meta"] = json.loads(raw_meta)
+        except json.JSONDecodeError:
+            d["meta"] = {}
+        if not isinstance(d["meta"], dict):
+            d["meta"] = {}
+        d["persona_id"] = d["meta"].get("persona_id")
+        d["attack_id"] = d["meta"].get("attack_id")
+        d["lens"] = d["meta"].get("lens") or d["meta"]
         out.append(d)
     return out
 

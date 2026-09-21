@@ -25,11 +25,12 @@ from .themes import (
     theme_config_for_storage,
     theme_from_query_and_bot,
 )
+from .lens import list_attacks, list_personas, normalize_lens
 
 app = FastAPI(
     title="Docket Desk",
     description="Mystery-shop companion API for Docket Assistant (WordPress connector).",
-    version="1.3.0",
+    version="1.3.1",
 )
 
 app.add_middleware(
@@ -78,6 +79,8 @@ class MysteryShopRequest(BaseModel):
     bot_id: str
     pack_id: str
     replies: dict[str, str] | None = None  # scenario_id -> assistant text override
+    persona_id: str | None = None  # shapes which scenarios run + user tone
+    attack_id: str | None = None
 
 
 class ExternalShopRequest(BaseModel):
@@ -148,6 +151,16 @@ def api_pack(pack_id: str) -> dict[str, Any]:
 @app.get("/api/dimensions")
 def api_dimensions() -> dict[str, Any]:
     return {"dimensions": list(DIMENSIONS)}
+
+
+@app.get("/api/personas")
+def api_personas() -> dict[str, Any]:
+    return {"personas": list_personas(), "count": len(list_personas())}
+
+
+@app.get("/api/attacks")
+def api_attacks() -> dict[str, Any]:
+    return {"attacks": list_attacks(), "count": len(list_attacks())}
 
 
 # ---------- bots ----------
@@ -284,7 +297,22 @@ async def mystery_shop(body: MysteryShopRequest) -> dict[str, Any]:
     except FileNotFoundError as exc:
         raise HTTPException(404, str(exc)) from exc
 
-    result = run_pack_on_bot(bot, pack, replies=body.replies)
+    lens = normalize_lens(body.persona_id, body.attack_id)
+    result = run_pack_on_bot(
+        bot,
+        pack,
+        replies=body.replies,
+        persona_id=lens["persona_id"],
+        attack_id=lens["attack_id"],
+    )
+    lens_meta = result.get("lens") or lens
+    run_meta = {
+        "persona_id": lens_meta.get("persona_id"),
+        "attack_id": lens_meta.get("attack_id"),
+        "persona_label": lens_meta.get("persona_label"),
+        "attack_label": lens_meta.get("attack_label"),
+        "lens": lens_meta,
+    }
     run = storage.save_run(
         bot_id=bot["id"],
         pack_id=pack["id"],
@@ -293,16 +321,27 @@ async def mystery_shop(body: MysteryShopRequest) -> dict[str, Any]:
         diff=result["diff"],
         patches=result["patches"],
         scenarios=result.get("scenarios") or [],
+        meta=run_meta,
     )
     alert = await maybe_alert_score_drop(
         title=f"{bot['name']} / {pack['id']}",
         scores=result["scores"],
-        context={"run_id": run["id"]},
+        context={
+            "run_id": run["id"],
+            "persona_id": run_meta.get("persona_id"),
+            "attack_id": run_meta.get("attack_id"),
+        },
     )
+    lens_bits = []
+    if run_meta.get("persona_label"):
+        lens_bits.append(str(run_meta["persona_label"]))
+    if run_meta.get("attack_label"):
+        lens_bits.append(str(run_meta["attack_label"]))
+    lens_suffix = f" · {' × '.join(lens_bits)}" if lens_bits else ""
     report = storage.save_report(
         kind="scorecard",
-        title=f"Scorecard: {bot['name']} — {pack['name']}",
-        payload={"run": run, "result": result, "alert": alert},
+        title=f"Scorecard: {bot['name']} — {pack['name']}{lens_suffix}",
+        payload={"run": run, "result": result, "alert": alert, "lens": lens_meta},
     )
     return {
         "run_id": run["id"],
@@ -314,6 +353,10 @@ async def mystery_shop(body: MysteryShopRequest) -> dict[str, Any]:
         "scenarios": result["scenarios"],
         "failures": result.get("failures") or [],
         "alert": alert,
+        "persona_id": run_meta.get("persona_id"),
+        "attack_id": run_meta.get("attack_id"),
+        "lens": lens_meta,
+        "scenario_count": result.get("scenario_count"),
     }
 
 
@@ -755,5 +798,7 @@ def root() -> dict[str, Any]:
         "widget": f"/widget/{HARBOR_BOT_ID}",
         "haven_widget": f"/widget/{HAVEN_BOT_ID}",
         "themes": "/api/themes",
-        "version": "1.3.0",
+        "personas": "/api/personas",
+        "attacks": "/api/attacks",
+        "version": "1.3.1",
     }

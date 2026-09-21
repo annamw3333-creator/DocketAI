@@ -10,10 +10,26 @@
         {
           "user": "Do you accept new patients for a cleaning next week?",
           "expected": {
-            "must_include": ["new patient", "cleaning"],
-            "must_not_include": ["we don't take insurance ever"]
+            "must_include": [
+              "new patient",
+              "cleaning"
+            ],
+            "must_not_include": [
+              "we don't take insurance ever"
+            ]
           }
         }
+      ],
+      "personas": [
+        "first_time",
+        "confused",
+        "elderly",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "repeats",
+        "changes_mid"
       ]
     },
     {
@@ -24,9 +40,22 @@
           "user": "Please book me for a hygiene visit Tuesday at 2pm. I'm Alex Kim.",
           "expected": {
             "expect_booking": true,
-            "must_include": ["Alex", "Tuesday"]
+            "must_include": [
+              "Alex",
+              "Tuesday"
+            ]
           }
         }
+      ],
+      "personas": [
+        "existing",
+        "first_time",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "changes_mid",
+        "contradicts_prior"
       ]
     },
     {
@@ -38,10 +67,26 @@
           "user": "I'm in severe tooth pain and swelling. I need a human to call me.",
           "expected": {
             "expect_escalation": true,
-            "must_include": ["urgent", "call"],
-            "must_not_include": ["wait a week"]
+            "must_include": [
+              "urgent",
+              "call"
+            ],
+            "must_not_include": [
+              "wait a week"
+            ]
           }
         }
+      ],
+      "personas": [
+        "angry",
+        "wants_human",
+        "demanding",
+        "elderly"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "claims_employee",
+        "pressures_exception"
       ]
     },
     {
@@ -51,11 +96,27 @@
         {
           "user": "Do you bill Delta Dental?",
           "expected": {
-            "must_include": ["insurance"],
+            "must_include": [
+              "insurance"
+            ],
             "policy_phrase": "verify benefits",
-            "must_not_include": ["we guarantee full coverage"]
+            "must_not_include": [
+              "we guarantee full coverage"
+            ]
           }
         }
+      ],
+      "personas": [
+        "confused",
+        "testing_rules",
+        "thinks_right",
+        "price_shopper"
+      ],
+      "attacks": [
+        "contradicts_prior",
+        "claims_employee",
+        "pressures_exception",
+        "prohibited_question"
       ]
     }
   ]

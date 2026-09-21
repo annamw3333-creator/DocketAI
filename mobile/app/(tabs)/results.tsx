@@ -16,12 +16,28 @@ import {
   Divider,
 } from "@/src/components";
 import { fetchRuns, fetchRun, fetchBaseline, RunSummary, ScenarioResult } from "@/src/api";
+import { PERSONAS, ATTACKS } from "@/src/library";
 import { colors, spacing, type } from "@/src/theme";
 
 function overallOf(s?: Record<string, number> | null): number | null {
   if (!s) return null;
   const v = s.overall ?? (s as any).Overall;
   return typeof v === "number" ? v : null;
+}
+
+
+function lensLabel(run: RunSummary): string | null {
+  const lens = run.lens || run.meta;
+  const pid = run.persona_id ?? lens?.persona_id;
+  const aid = run.attack_id ?? lens?.attack_id;
+  const pl =
+    (lens as any)?.persona_label ||
+    (pid ? PERSONAS.find((x) => x.id === pid)?.label : null);
+  const al =
+    (lens as any)?.attack_label ||
+    (aid ? ATTACKS.find((x) => x.id === aid)?.label : null);
+  if (!pl && !al) return null;
+  return `${pl || "Any persona"}${al ? ` × ${al}` : ""}`;
 }
 
 function severityTone(sev?: string): "gold" | "danger" | "muted" | "ok" {
@@ -135,9 +151,30 @@ export default function ResultsScreen() {
       ? Object.entries(run.scores).filter(([k]) => k.toLowerCase() !== "overall")
       : [];
 
+    const lens = lensLabel(run);
+    const failures = (run as any).failures as { scenario_id?: string; reason?: string }[] | undefined;
+    const failedScenarios = (run.scenarios || []).filter((s) => s.passed === false);
+
     return (
       <View style={styles.detail}>
         <Divider />
+
+        {lens ? (
+          <>
+            <SectionLabel>Lens used</SectionLabel>
+            <Card>
+              <Badge label={lens} tone="gold" />
+              {(run.lens?.mode || run.meta?.mode) ? (
+                <Text style={styles.meta}>Mode · {String(run.lens?.mode || run.meta?.mode)}</Text>
+              ) : null}
+            </Card>
+          </>
+        ) : (
+          <>
+            <SectionLabel>Lens used</SectionLabel>
+            <Text style={styles.meta}>No persona / attack lens — full pack.</Text>
+          </>
+        )}
 
         <SectionLabel>Overall</SectionLabel>
         <View style={styles.compareRow}>
@@ -191,6 +228,33 @@ export default function ResultsScreen() {
           </>
         )}
 
+        {(failedScenarios.length > 0 || (failures && failures.length > 0)) ? (
+          <>
+            <SectionLabel>Failures ({failedScenarios.length || failures?.length || 0})</SectionLabel>
+            {failedScenarios.length
+              ? failedScenarios.map((sc) => (
+                  <Card
+                    key={`fail-${sc.scenario_id}`}
+                    onPress={() => setOpenScenario(openScenario === sc.scenario_id ? null : sc.scenario_id)}
+                  >
+                    <View style={styles.rowBetween}>
+                      <Text style={styles.cardTitle}>{sc.name || sc.scenario_id}</Text>
+                      <Badge label={sc.severity || "fail"} tone={severityTone(sc.severity)} />
+                    </View>
+                    {(sc.reasons || []).slice(0, 2).map((r, i) => (
+                      <Text key={i} style={styles.meta}>· {r}</Text>
+                    ))}
+                  </Card>
+                ))
+              : (failures || []).map((f, i) => (
+                  <Card key={`f-${i}`}>
+                    <Text style={styles.cardTitle}>{f.scenario_id || "scenario"}</Text>
+                    <Text style={styles.meta}>{f.reason}</Text>
+                  </Card>
+                ))}
+          </>
+        ) : null}
+
         <SectionLabel>Scenarios</SectionLabel>
         {scenarios.length === 0 ? (
           <Text style={styles.meta}>No scenario detail stored for this run.</Text>
@@ -226,10 +290,29 @@ export default function ResultsScreen() {
                       <>
                         <Text style={styles.fixLabel}>Fixes</Text>
                         {sc.suggested_fixes!.map((f, i) => (
-                          <Text key={i} style={styles.meta}>
-                            · {f}
-                          </Text>
+                          <View key={i} style={{ marginBottom: 6 }}>
+                            <Text style={styles.meta}>· {f}</Text>
+                            <Button
+                              title={copied === `sf-${sc.scenario_id}-${i}` ? "Copied" : "Copy"}
+                              onPress={() => copyOne(f, `sf-${sc.scenario_id}-${i}`)}
+                              variant="text"
+                            />
+                          </View>
                         ))}
+                        <Button
+                          title={
+                            copied === `sf-all-${sc.scenario_id}` ? "Copied fixes" : "Copy all fixes"
+                          }
+                          onPress={async () => {
+                            const fixes = sc.suggested_fixes || [];
+                            if (!fixes.length) return;
+                            await Clipboard.setStringAsync(
+                              fixes.map((f, i) => `${i + 1}. ${f}`).join("\n\n")
+                            );
+                            flashCopied(`sf-all-${sc.scenario_id}`);
+                          }}
+                          variant="ghost"
+                        />
                       </>
                     ) : null}
                     {sc.user ? (
@@ -286,6 +369,9 @@ export default function ResultsScreen() {
               <Text style={styles.meta}>
                 {r.bot_id} · {r.created_at || "—"}
               </Text>
+              {lensLabel(r) ? (
+                <Badge label={lensLabel(r)!} tone="gold" />
+              ) : null}
               {overall != null ? (
                 <Badge label={`${Math.round(Number(overall))}% overall`} tone="gold" />
               ) : (

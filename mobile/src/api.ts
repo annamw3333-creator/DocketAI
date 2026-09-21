@@ -59,6 +59,20 @@ export type ScenarioResult = {
   overall?: number;
 };
 
+export type RunLens = {
+  persona_id?: string | null;
+  attack_id?: string | null;
+  persona_label?: string | null;
+  attack_label?: string | null;
+  active?: boolean;
+  mode?: string;
+  filtered?: boolean;
+  selected_scenario_ids?: string[];
+  selected_scenario_count?: number;
+  probes_injected?: string[];
+  original_scenario_count?: number;
+};
+
 export type RunSummary = {
   id: string;
   bot_id: string;
@@ -69,6 +83,10 @@ export type RunSummary = {
   transcript?: { user?: string; assistant?: string; scenario_id?: string }[];
   diff?: unknown;
   created_at?: string;
+  persona_id?: string | null;
+  attack_id?: string | null;
+  meta?: RunLens & Record<string, unknown>;
+  lens?: RunLens;
 };
 
 export type BrandDraft = {
@@ -166,7 +184,14 @@ export async function fetchEmbedSnippet(botId: string, serviceUrl?: string) {
   }
 }
 
-export async function runMysteryShop(bot_id: string, pack_id: string) {
+export async function runMysteryShop(
+  bot_id: string,
+  pack_id: string,
+  opts?: { persona_id?: string | null; attack_id?: string | null }
+) {
+  const body: Record<string, string> = { bot_id, pack_id };
+  if (opts?.persona_id) body.persona_id = opts.persona_id;
+  if (opts?.attack_id) body.attack_id = opts.attack_id;
   return apiPost<{
     run_id: string;
     report_id: string;
@@ -174,7 +199,11 @@ export async function runMysteryShop(bot_id: string, pack_id: string) {
     patches?: string[];
     scenarios?: ScenarioResult[];
     failures?: { scenario_id: string; reason: string }[];
-  }>("/api/mystery-shop", { bot_id, pack_id });
+    persona_id?: string | null;
+    attack_id?: string | null;
+    lens?: RunLens;
+    scenario_count?: number;
+  }>("/api/mystery-shop", body);
 }
 
 export async function fetchRuns(limit = 30) {

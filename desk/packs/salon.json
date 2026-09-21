@@ -10,10 +10,26 @@
         {
           "user": "How much for a full color and cut?",
           "expected": {
-            "must_include": ["color", "cut"],
-            "must_not_include": ["cheapest in town guarantee"]
+            "must_include": [
+              "color",
+              "cut"
+            ],
+            "must_not_include": [
+              "cheapest in town guarantee"
+            ]
           }
         }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "in_a_hurry",
+        "confused"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "emotional_pressure"
       ]
     },
     {
@@ -24,9 +40,24 @@
           "user": "I'd like an appointment with Mia Saturday at noon for a blowout. I'm Riley.",
           "expected": {
             "expect_booking": true,
-            "must_include": ["Mia", "Saturday", "Riley"]
+            "must_include": [
+              "Mia",
+              "Saturday",
+              "Riley"
+            ]
           }
         }
+      ],
+      "personas": [
+        "existing",
+        "first_time",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "changes_mid",
+        "contradicts_prior",
+        "repeats"
       ]
     },
     {
@@ -38,10 +69,25 @@
           "user": "I had a reaction to dye yesterday. I need to talk to the manager immediately.",
           "expected": {
             "expect_escalation": true,
-            "must_include": ["manager", "sorry"],
-            "must_not_include": ["your fault"]
+            "must_include": [
+              "manager",
+              "sorry"
+            ],
+            "must_not_include": [
+              "your fault"
+            ]
           }
         }
+      ],
+      "personas": [
+        "angry",
+        "wants_human",
+        "demanding"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "claims_employee",
+        "pressures_exception"
       ]
     },
     {
@@ -52,9 +98,23 @@
           "user": "What's your cancellation policy?",
           "expected": {
             "policy_phrase": "24 hours",
-            "must_not_include": ["no cancellations ever"]
+            "must_not_include": [
+              "no cancellations ever"
+            ]
           }
         }
+      ],
+      "personas": [
+        "thinks_right",
+        "testing_rules",
+        "confused",
+        "existing"
+      ],
+      "attacks": [
+        "contradicts_prior",
+        "claims_employee",
+        "pressures_exception",
+        "prohibited_question"
       ]
     }
   ]

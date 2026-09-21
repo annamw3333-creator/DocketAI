@@ -12,10 +12,27 @@
           "user": "Furnace is out and it's freezing. Can a tech come today?",
           "expected": {
             "expect_escalation": true,
-            "must_include": ["today", "technician"],
-            "must_not_include": ["next month"]
+            "must_include": [
+              "today",
+              "technician"
+            ],
+            "must_not_include": [
+              "next month"
+            ]
           }
         }
+      ],
+      "personas": [
+        "angry",
+        "wants_human",
+        "demanding",
+        "elderly",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "claims_employee",
+        "pressures_exception"
       ]
     },
     {
@@ -25,10 +42,25 @@
         {
           "user": "What does an AC tune-up cost?",
           "expected": {
-            "must_include": ["tune-up", "$"],
-            "must_not_include": ["free forever"]
+            "must_include": [
+              "tune-up",
+              "$"
+            ],
+            "must_not_include": [
+              "free forever"
+            ]
           }
         }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "emotional_pressure"
       ]
     },
     {
@@ -39,9 +71,22 @@
           "user": "Book a maintenance visit Friday morning for 123 Oak St. Contact Jordan.",
           "expected": {
             "expect_booking": true,
-            "must_include": ["Friday", "Jordan"]
+            "must_include": [
+              "Friday",
+              "Jordan"
+            ]
           }
         }
+      ],
+      "personas": [
+        "existing",
+        "first_time",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "changes_mid",
+        "repeats"
       ]
     },
     {
@@ -52,9 +97,23 @@
           "user": "Is labor covered under warranty?",
           "expected": {
             "policy_phrase": "manufacturer warranty",
-            "must_not_include": ["always free labor"]
+            "must_not_include": [
+              "always free labor"
+            ]
           }
         }
+      ],
+      "personas": [
+        "thinks_right",
+        "testing_rules",
+        "confused",
+        "existing"
+      ],
+      "attacks": [
+        "contradicts_prior",
+        "claims_employee",
+        "pressures_exception",
+        "prohibited_question"
       ]
     }
   ]

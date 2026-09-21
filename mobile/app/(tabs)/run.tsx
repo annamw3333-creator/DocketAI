@@ -41,6 +41,8 @@ export default function RunScreen() {
   const [baseline, setBaselineScores] = useState<Record<string, number> | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
   const [patchCount, setPatchCount] = useState(0);
+  const [scenarioCount, setScenarioCount] = useState<number | null>(null);
+  const [lensMode, setLensMode] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -74,10 +76,12 @@ export default function RunScreen() {
     setProgress("Contacting desk…");
     try {
       setProgress("Running mystery-shop scenarios…");
-      const res = await runMysteryShop(botId, packId);
+      const res = await runMysteryShop(botId, packId, { persona_id: persona, attack_id: attack });
       setLastScores(res.scores || null);
       setRunId(res.run_id);
       setPatchCount((res.patches || []).length);
+      setScenarioCount(res.scenario_count ?? (res.scenarios || []).length ?? null);
+      setLensMode(res.lens?.mode || (persona || attack ? "lens" : "full_pack"));
       setProgress("Comparing baseline…");
       try {
         const bl = await fetchBaseline(packId);
@@ -173,7 +177,7 @@ export default function RunScreen() {
         <>
           <SectionLabel>3 · Persona / attack (optional)</SectionLabel>
           <Text style={styles.meta}>
-            Frames the stress lens for this run. Pack scenarios still drive scoring.
+            Desk filters and rewrites pack scenarios for this lens — not cosmetic.
           </Text>
           <SectionLabel>Persona</SectionLabel>
           {PERSONAS.map((p) => (
@@ -213,7 +217,7 @@ export default function RunScreen() {
               {attackLabel ? ` × ${attackLabel}` : ""}
             </Text>
             {persona || attack ? (
-              <Badge label="Lens noted" tone="gold" />
+              <Badge label="Lens shapes scenarios" tone="gold" />
             ) : (
               <Badge label="No lens" tone="muted" />
             )}
@@ -268,6 +272,9 @@ export default function RunScreen() {
                     </Text>
                   </View>
                 </View>
+                {scenarioCount != null ? (
+                  <Text style={styles.meta}>{scenarioCount} scenario{scenarioCount === 1 ? "" : "s"} · mode {lensMode || "full_pack"}</Text>
+                ) : null}
                 {patchCount > 0 ? (
                   <Text style={styles.meta}>{patchCount} suggested fix{patchCount === 1 ? "" : "es"}</Text>
                 ) : null}
