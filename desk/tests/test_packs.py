@@ -19,6 +19,11 @@ _REQUIRED_THEMES = (
     "payment",
     "incomplete",
     "mid_change",
+    # Owner-critical buyer-bar coverage
+    "after_hours",
+    "brand_voice",
+    "handoff",
+    "attack",
 )
 
 # Original IDs from the 16-scenario expansion that tests/docs may reference
@@ -103,7 +108,7 @@ def test_all_packs_substantially_expanded():
     assert set(list_pack_ids()) == {"cleaning", "dental", "hvac", "salon"}
     for pack in packs:
         scenarios = pack["scenarios"]
-        assert len(scenarios) >= 20, f"{pack['id']} too small: {len(scenarios)}"
+        assert len(scenarios) >= 26, f"{pack['id']} too small: {len(scenarios)}"
         ids = [sc["id"] for sc in scenarios]
         assert len(ids) == len(set(ids)), f"duplicate ids in {pack['id']}"
         blob = " ".join(f"{sc['id']} {sc.get('name', '')}" for sc in scenarios).lower()
@@ -130,22 +135,27 @@ def test_every_scenario_has_valid_persona_and_attack_tags():
 
 
 def test_packs_are_multi_turn_and_rich():
-    """Deeper packs: many 3+ turn scenarios with failure criteria / suggested fixes."""
+    """Deeper packs: owner-critical multi-turn with failure criteria / suggested fixes."""
     for pack in load_all_packs():
         scenarios = pack["scenarios"]
         multi = [sc for sc in scenarios if len(sc.get("steps") or []) >= 2]
         deep = [sc for sc in scenarios if len(sc.get("steps") or []) >= 3]
+        deeper = [sc for sc in scenarios if len(sc.get("steps") or []) >= 4]
         rich = [
             sc
             for sc in scenarios
             if sc.get("suggested_fixes") or sc.get("failure_criteria") or sc.get("policy_refs")
         ]
-        assert len(multi) >= 12, f"{pack['id']} needs more multi-turn scenarios"
-        assert len(deep) >= 6, f"{pack['id']} needs more 3+ turn depth"
-        assert len(rich) >= 12, f"{pack['id']} needs richer metadata fields"
+        assert len(multi) >= 20, f"{pack['id']} needs more multi-turn scenarios"
+        assert len(deep) >= 20, f"{pack['id']} needs more 3+ turn depth"
+        assert len(deeper) >= 10, f"{pack['id']} needs more 4+ turn depth"
+        assert len(rich) >= 20, f"{pack['id']} needs richer metadata fields"
         # Spot-check severity on a high-stakes scenario
         highs = [sc for sc in scenarios if sc.get("severity") == "high"]
         assert highs, f"{pack['id']} should mark some high-severity scenarios"
+        # Every scenario should be at least 3 turns after owner-critical deepening
+        short = [sc["id"] for sc in scenarios if len(sc.get("steps") or []) < 3]
+        assert not short, f"{pack['id']} still has short scenarios: {short}"
 
 
 def test_lens_filter_prefers_tagged_intersection():
@@ -155,7 +165,7 @@ def test_lens_filter_prefers_tagged_intersection():
     )
     assert meta["filtered"] is True
     assert meta["original_scenario_count"] == len(pack["scenarios"])
-    assert meta["selected_scenario_count"] < meta["original_scenario_count"] + 3
+    assert meta["selected_scenario_count"] <= meta["original_scenario_count"] + 3
     ids = meta["selected_scenario_ids"]
     assert "color_price" in ids or "price_extensions" in ids
     # Rewrites applied on first turn only; later turns kept
