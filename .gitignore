@@ -17,3 +17,16 @@ mobile/android/app/.cxx/
 **/local.properties
 desk/.venv/
 desk-deploy/.env
+
+# Local billing test overrides
+desk/data/founding_override.json
+
+# Stripe local secrets / exports (never commit)
+desk/.stripe_webhook_secret
+desk/.stripe_catalog_exports.env
+desk/.stripe_webhook_meta.json
+desk/.env
+*.env
+!desk/.env.example
+!desk-deploy/.env.example
+!**/.env.example

@@ -60,6 +60,7 @@ export default function HomeScreen() {
       <Button title="Build / Themes" onPress={() => router.push("/build")} />
       <Button title="Run mystery shop" onPress={() => router.push("/run")} variant="ghost" />
       <Button title="View results" onPress={() => router.push("/results")} variant="text" />
+      <Button title="Plans / Subscribe" onPress={() => router.push("/plans")} variant="ghost" />
 
       <Divider />
 

@@ -5,7 +5,7 @@ import json
 from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field, HttpUrl
@@ -26,11 +26,14 @@ from .themes import (
     theme_from_query_and_bot,
 )
 from .lens import list_attacks, list_personas, normalize_lens
+from . import billing as billing_mod
+from . import admin as admin_mod
+from .entitlements import check_max_bots, entitlements_for_tier
 
 app = FastAPI(
     title="Docket Desk",
     description="Mystery-shop companion API for Docket Assistant (WordPress connector).",
-    version="1.3.1",
+    version="1.3.2",
 )
 
 app.add_middleware(
@@ -167,7 +170,11 @@ def api_attacks() -> dict[str, Any]:
 
 
 @app.post("/api/bots")
-def create_bot(body: BotCreate) -> dict[str, Any]:
+def create_bot(request: Request, body: BotCreate) -> dict[str, Any]:
+    ents = admin_mod.entitlements_from_request(request)
+    msg = check_max_bots(ents, len(storage.list_bots()))
+    if msg:
+        raise HTTPException(status_code=402, detail=msg)
     theme_body = dict(body.theme or {})
     if body.theme_id:
         theme_body["theme_id"] = body.theme_id
@@ -184,7 +191,7 @@ def create_bot(body: BotCreate) -> dict[str, Any]:
 
 
 @app.post("/api/bots/from-brand")
-async def bots_from_brand(body: BrandFromRequest) -> dict[str, Any]:
+async def bots_from_brand(request: Request, body: BrandFromRequest) -> dict[str, Any]:
     """Fetch a public website (SSRF-safe) and create a draft bot.
 
     Draft system prompt + FAQ are deterministic templates labeled as draft.
@@ -207,6 +214,11 @@ async def bots_from_brand(body: BrandFromRequest) -> dict[str, Any]:
 
     if not body.create:
         return {"draft": draft, "bot": None, "created": False}
+
+    ents = admin_mod.entitlements_from_request(request)
+    msg = check_max_bots(ents, len(storage.list_bots()))
+    if msg:
+        raise HTTPException(status_code=402, detail=msg)
 
     theme_body = dict(body.theme or {})
     if body.theme_id:
@@ -762,6 +774,106 @@ def chat(bot_id: str, body: ChatBody) -> dict[str, str]:
     return {"reply": simulate_reply(body.message, bot, {})}
 
 
+
+# ---------- billing ----------
+
+
+class CheckoutRequest(BaseModel):
+    tier: str
+    success_url: str
+    cancel_url: str
+    email: str | None = None
+
+
+class FoundingAdjustRequest(BaseModel):
+    claimed: int = Field(..., ge=0, le=10)
+
+
+@app.get("/api/billing/plans")
+def billing_plans() -> dict[str, Any]:
+    return billing_mod.plans_response()
+
+
+@app.post("/api/billing/checkout")
+def billing_checkout(body: CheckoutRequest) -> dict[str, Any]:
+    try:
+        session = billing_mod.create_checkout_session(
+            tier=body.tier,
+            success_url=body.success_url,
+            cancel_url=body.cancel_url,
+            email=body.email,
+        )
+    except PermissionError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return session
+
+
+@app.post("/api/billing/webhook")
+async def billing_webhook(request: Request) -> dict[str, Any]:
+    payload = await request.body()
+    sig = request.headers.get("stripe-signature") or ""
+    try:
+        event = billing_mod.construct_webhook_event(payload, sig)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=400, detail=f"webhook verify failed: {exc}") from exc
+    return billing_mod.handle_webhook_event(event)
+
+
+# ---------- admin ----------
+
+
+@app.get("/api/admin/me")
+def admin_me(identity: dict[str, Any] = Depends(admin_mod.require_admin)) -> dict[str, Any]:
+    return {
+        "ok": True,
+        "email": identity.get("email"),
+        "auth": identity.get("auth"),
+        "entitlements": identity.get("entitlements"),
+        "subscription": "admin",
+        "bypass_paywall": True,
+    }
+
+
+@app.get("/api/admin/billing/overview")
+def admin_billing_overview(
+    identity: dict[str, Any] = Depends(admin_mod.require_admin),
+) -> dict[str, Any]:
+    _ = identity
+    return billing_mod.billing_overview()
+
+
+@app.post("/api/admin/founding/adjust")
+def admin_founding_adjust(
+    body: FoundingAdjustRequest,
+    identity: dict[str, Any] = Depends(admin_mod.require_admin),
+) -> dict[str, Any]:
+    """Manual claimed override for testing ONLY when Stripe is unset.
+
+    When STRIPE_SECRET_KEY is set, this endpoint is read-only and returns a
+    live recount from Stripe (no local mutation).
+    """
+    _ = identity
+    status = billing_mod.get_founding_status()
+    if status.get("stripe_configured"):
+        return {
+            "ok": True,
+            "mutable": False,
+            "message": "Stripe configured — founding countdown is read-only; recounted from Stripe.",
+            "founding": status,
+        }
+    claimed = billing_mod.set_local_founding_claimed(body.claimed)
+    return {
+        "ok": True,
+        "mutable": True,
+        "message": f"Local founding claimed set to {claimed} (test override; Stripe unset).",
+        "founding": billing_mod.get_founding_status(),
+    }
+
+
 # ---------- baselines for regression ----------
 
 
@@ -800,5 +912,7 @@ def root() -> dict[str, Any]:
         "themes": "/api/themes",
         "personas": "/api/personas",
         "attacks": "/api/attacks",
-        "version": "1.3.1",
+        "billing_plans": "/api/billing/plans",
+        "admin_me": "/api/admin/me",
+        "version": "1.3.2",
     }

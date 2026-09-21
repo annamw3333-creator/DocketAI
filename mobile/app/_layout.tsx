@@ -24,6 +24,13 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="plans"
+          options={{
+            title: "Plans",
+            headerBackTitle: "Back",
+          }}
+        />
       </Stack>
     </GestureHandlerRootView>
   );

@@ -248,3 +248,122 @@ export async function createBotFromBrand(input: {
     theme_id: input.theme_id || undefined,
   });
 }
+
+export type PlanEntitlements = {
+  max_bots: number;
+  mystery_runs_per_month: number;
+  max_embeds: number;
+  theme_studio: boolean;
+  brand_to_bot: boolean;
+  custom_packs: boolean;
+  multi_seat: boolean;
+  priority_support: boolean;
+  founder_rate: boolean;
+};
+
+export type BillingPlan = {
+  id: string;
+  name: string;
+  tagline?: string;
+  pricing_display: Record<string, unknown>;
+  entitlements: PlanEntitlements;
+  feature_bullets: string[];
+  founding?: {
+    limit: number;
+    claimed: number;
+    remaining: number;
+    available: boolean;
+  };
+};
+
+export type FoundingStatus = {
+  limit: number;
+  claimed: number;
+  remaining: number;
+  available: boolean;
+  stripe_configured?: boolean;
+  source?: string;
+};
+
+export type BillingPlansResponse = {
+  product: string;
+  plans: BillingPlan[];
+  founding: FoundingStatus;
+  stripe_configured?: boolean;
+};
+
+export async function fetchBillingPlans() {
+  return apiGet<BillingPlansResponse>("/api/billing/plans");
+}
+
+export async function createCheckoutSession(input: {
+  tier: string;
+  success_url: string;
+  cancel_url: string;
+  email?: string;
+}) {
+  return apiPost<{ id: string; url: string; tier: string }>("/api/billing/checkout", input);
+}
+
+async function adminHeaders(): Promise<Record<string, string>> {
+  const { getAdminEmail, getAdminToken } = await import("./settings");
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+  const email = await getAdminEmail();
+  const token = await getAdminToken();
+  if (email) headers["X-Docket-Admin-Email"] = email;
+  if (token) headers["X-Docket-Admin-Token"] = token;
+  return headers;
+}
+
+export async function fetchAdminMe() {
+  const url = `${await base()}/api/admin/me`;
+  const r = await fetch(url, { headers: await adminHeaders() });
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`${r.status} ${r.statusText}${text ? `: ${text.slice(0, 200)}` : ""}`);
+  }
+  return r.json() as Promise<{
+    ok: boolean;
+    email?: string | null;
+    auth?: string;
+    entitlements?: Record<string, unknown>;
+    subscription?: string;
+    bypass_paywall?: boolean;
+  }>;
+}
+
+export async function fetchAdminBillingOverview() {
+  const url = `${await base()}/api/admin/billing/overview`;
+  const r = await fetch(url, { headers: await adminHeaders() });
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`${r.status} ${r.statusText}${text ? `: ${text.slice(0, 200)}` : ""}`);
+  }
+  return r.json() as Promise<{
+    founding: FoundingStatus;
+    plans: BillingPlan[];
+    stripe_configured: boolean;
+  }>;
+}
+
+export async function adjustFoundingClaimed(claimed: number) {
+  const url = `${await base()}/api/admin/founding/adjust`;
+  const r = await fetch(url, {
+    method: "POST",
+    headers: await adminHeaders(),
+    body: JSON.stringify({ claimed }),
+  });
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`${r.status} ${r.statusText}${text ? `: ${text.slice(0, 200)}` : ""}`);
+  }
+  return r.json() as Promise<{
+    ok: boolean;
+    mutable: boolean;
+    message: string;
+    founding: FoundingStatus;
+  }>;
+}
