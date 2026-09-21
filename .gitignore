@@ -15,3 +15,5 @@ mobile/android/app/.cxx/
 *.apk
 !mobile/README.md
 **/local.properties
+desk/.venv/
+desk-deploy/.env

@@ -1,56 +1,86 @@
 # DocketAI
 
-**AI customer-service QA** for chatbots — mystery-shop testing, regression runs after knowledge-base updates, and a customer × attack library.
+**Conversational agent QA** — mystery-shop your customer-service chatbot, catch regressions after knowledge-base updates, and stress-test replies with a persona × attack library.
 
-## What's in this repo
+Built by [Anna Walker](https://annabuildsai.com) · Android APKs: [DocketAI-releases](https://github.com/annamw3333-creator/DocketAI-releases)
 
-| Path | Purpose |
-|------|---------|
-| `desk/` | FastAPI mystery-shop companion (packs, scorecards, bake-offs, SQLite) |
-| `wordpress-plugin/` | Docket Assistant WordPress plugin (hardened v1.1.0) |
-| `mobile/` | Expo / React Native Android app — **DocketAI** `com.docketai.app` v1.0.0 |
+## Problem
+
+Chatbots drift. A FAQ edit or prompt tweak can quietly break tone, policy, or booking flows. DocketAI runs structured mystery-shop packs against a bot, scores the run, and lets you compare a **baseline** vs a later **re-check** so you see what changed.
+
+## Stack
+
+| Layer | Tech |
+|-------|------|
+| Desk API | **FastAPI** + SQLite (`desk/`) — packs, mystery-shop, baselines, bake-offs |
+| Mobile | **Expo / React Native** Android app (`mobile/`) — `com.docketai.app` |
+| Optional embed | WordPress plugin (`wordpress-plugin/`) — same lineage as [docket-assistant](https://github.com/annamw3333-creator/docket-assistant) |
+
+**UI:** black / white / gold editorial theme (dark surfaces, `#C9A227` accents) — Home · Run · Results · Library · Settings.
+
+**Live desk** (Render; free tier may cold-start): https://docketai-desk.onrender.com — `GET /health` → `{"status":"ok","service":"docket-desk"}`.
+
+## What’s implemented
+
+- **Mystery-shop runs** — `POST /api/mystery-shop` with bot + vertical pack (cleaning, dental, HVAC, salon)
+- **Scorecards** — dimensions such as truthfulness, escalation, policy, tone, booking; history via `GET /api/runs`
+- **Persona × attack library (mobile)** — **11 personas × 10 attacks** (Library tab); used to frame stress scenarios
+- **Baseline vs re-check (mobile + desk)** — save pack scores with `POST /api/baselines/{pack_id}`, load with `GET /api/baselines/{pack_id}`; Run tab shows delta after a new mystery-shop
+- **Bake-off / reports / embed helpers** — see `desk/README.md` for desk-only endpoints
+
+## Repo layout
+
+```
+desk/                 FastAPI mystery-shop companion
+mobile/               Expo Router Android app
+wordpress-plugin/     Docket Assistant (v1.1.0) for site chat embed
+render.yaml           Render blueprint for the desk service
+```
 
 ## Quick start — desk
 
 ```bash
 cd desk
 ./run.sh
+# → http://localhost:8000  ·  docs at /docs
 ```
 
-Desk API highlights used by the mobile app:
+Useful endpoints for the mobile app:
 
 - `GET /health`, `GET /api/packs`, `GET /api/bots`
 - `POST /api/mystery-shop`, `GET /api/runs`
 - `POST /api/baselines/{pack_id}`, `GET /api/baselines/{pack_id}`
 
-## Android APK (v1.0.0)
+Point the mobile **Settings** desk URL at your local or Render host.
 
-Sideload builds are on [Releases](https://github.com/annamw3333-creator/DocketAI/releases).
+## Quick start — mobile
 
-- **Package:** `com.docketai.app`
-- **JS embedded** in the APK (`assets/index.android.bundle`) — no Metro packager required on device
-- **UI:** dark navy / teal; tabs Home · Run · Results · Library · Settings
-- **Library:** 11 personas × 10 attacks; Run tab includes Baseline vs Re-check regression stub
+```bash
+cd mobile
+yarn install --ignore-engines
+yarn start
+# Expo Go, or prebuild + assembleRelease for a sideload APK
+```
 
-### Build locally
+Release APKs (embedded JS bundle — no Metro on device):  
+→ [DocketAI-releases](https://github.com/annamw3333-creator/DocketAI-releases/releases) (current **v1.2.0**)
+
+Local release build sketch:
 
 ```bash
 export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 export ANDROID_HOME=$HOME/Android/Sdk
 cd mobile
-yarn install --ignore-engines
 npx expo prebuild --platform android
-# android/app/build.gradle must include: debuggableVariants = []
 cd android && ./gradlew assembleRelease
-# → android/app/build/outputs/apk/release/app-release.apk
 ```
 
-Verify embed:
+## License
 
-```bash
-unzip -l app-release.apk | grep index.android.bundle
-```
+MIT — see [LICENSE](LICENSE).
 
-## Owner
+## Links
 
-Anna Walker (`annamw3333-creator`)
+- Portfolio: https://annabuildsai.com  
+- APK downloads: https://github.com/annamw3333-creator/DocketAI-releases  
+- WordPress plugin (standalone): https://github.com/annamw3333-creator/docket-assistant  
