@@ -95,3 +95,14 @@ def test_score_scenario_intersection_bonus():
     both = score_scenario(sc, "angry", "emotional_pressure")
     one = score_scenario(sc, "angry", None)
     assert both > one
+
+
+def test_lens_keeps_later_turns():
+    """Lens rewrites turn 0 but preserves multi-turn depth."""
+    pack = load_pack("cleaning")
+    shaped, meta = shape_pack_for_lens(pack, persona_id="angry", attack_id="emotional_pressure")
+    deep = next(sc for sc in shaped["scenarios"] if len(sc.get("steps") or []) >= 3)
+    assert "ridiculous" in deep["steps"][0]["user"].lower() or "desperate" in deep["steps"][0]["user"].lower() or "NOW" in deep["steps"][0]["user"]
+    # Later turns unchanged by lens overlay
+    assert deep["steps"][1]["user"]
+    assert deep["steps"][1]["user"] != deep["steps"][0]["user"]

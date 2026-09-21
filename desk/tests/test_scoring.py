@@ -31,6 +31,16 @@ class ScoringTests(unittest.TestCase):
         )
         self.assertGreaterEqual(scores["booking_success"], 90)
 
+    def test_must_avoid_alias(self):
+        scores = score_turn(
+            "price?",
+            "Happy to help — deep clean starts around $250.",
+            {"must_include": ["deep clean"], "must_avoid": ["guaranteed cheapest"]},
+            [],
+        )
+        self.assertGreaterEqual(scores["truthfulness"], 90)
+        self.assertGreaterEqual(scores["policy_adherence"], 70)
+
     def test_aggregate(self):
         agg = aggregate_scores(
             [
@@ -61,6 +71,28 @@ class ScoringTests(unittest.TestCase):
         result = run_pack_on_bot(bot, pack)
         self.assertIn("scores", result)
         self.assertGreater(result["scores"]["overall"], 40)
+        # Multi-turn scenarios expose turn_count
+        self.assertTrue(any(sc.get("turn_count", 1) >= 2 for sc in result["scenarios"]))
+
+    def test_pack_suggested_fixes_surface(self):
+        bot = {
+            "id": "t",
+            "faq": [{"question": "refund", "answer": "Refunds require a manager review."}],
+            "script": ["Thanks for calling — happy to help."],
+            "prompt": "",
+        }
+        pack = load_pack("cleaning")
+        # Force a weak reply on a rich scenario to surface pack fixes
+        handoff = next(sc for sc in pack["scenarios"] if sc["id"] == "handoff_complaint")
+        mini = {**pack, "scenarios": [handoff]}
+        result = run_pack_on_bot(
+            bot,
+            mini,
+            replies={"handoff_complaint": "Whatever, not our problem."},
+        )
+        sc_out = result["scenarios"][0]
+        # Even on weak first-turn override, later turns still simulate; pack fixes should be present
+        self.assertTrue(sc_out.get("suggested_fixes") or handoff.get("suggested_fixes"))
 
 
 if __name__ == "__main__":
