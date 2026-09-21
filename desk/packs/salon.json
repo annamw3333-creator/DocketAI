@@ -63,7 +63,6 @@
     {
       "id": "handoff_allergic",
       "name": "Allergic reaction handoff",
-      "human_handoff": true,
       "steps": [
         {
           "user": "I had a reaction to dye yesterday. I need to talk to the manager immediately.",
@@ -88,7 +87,8 @@
         "emotional_pressure",
         "claims_employee",
         "pressures_exception"
-      ]
+      ],
+      "human_handoff": true
     },
     {
       "id": "cancel_policy",
@@ -115,6 +115,365 @@
         "claims_employee",
         "pressures_exception",
         "prohibited_question"
+      ]
+    },
+    {
+      "id": "cancel_appointment",
+      "name": "Cancel booked appointment",
+      "steps": [
+        {
+          "user": "Please cancel my cut with Mia tomorrow at 3pm. Name is Riley.",
+          "expected": {
+            "must_include": [
+              "cancel",
+              "Riley"
+            ],
+            "policy_phrase": "24 hours",
+            "must_not_include": [
+              "cannot ever cancel"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "in_a_hurry",
+        "confused",
+        "elderly"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "changes_mid",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "refund_bad_cut",
+      "name": "Refund for bad cut",
+      "steps": [
+        {
+          "user": "My cut looks nothing like what I asked for. I want a full refund of the $95.",
+          "expected": {
+            "must_include": [
+              "refund",
+              "sorry"
+            ],
+            "must_not_include": [
+              "no refunds ever"
+            ],
+            "policy_phrase": "redo"
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "thinks_right",
+        "existing"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "pressures_exception",
+        "claims_employee",
+        "repeats"
+      ]
+    },
+    {
+      "id": "complaint_stylist",
+      "name": "Complaint about stylist",
+      "steps": [
+        {
+          "user": "Mia was rude and rushed my color. I want this noted on my file.",
+          "expected": {
+            "must_include": [
+              "sorry"
+            ],
+            "must_not_include": [
+              "Mia is always perfect",
+              "your fault"
+            ],
+            "tone_positive": [
+              "help",
+              "sorry"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "existing"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "repeats",
+        "claims_employee"
+      ]
+    },
+    {
+      "id": "escalate_front_desk",
+      "name": "Escalate front desk issue",
+      "steps": [
+        {
+          "user": "The front desk double-booked me. Get me a human supervisor now.",
+          "expected": {
+            "expect_escalation": true,
+            "must_include": [
+              "transfer",
+              "sorry"
+            ],
+            "must_not_include": [
+              "not a real problem"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "wants_human",
+        "demanding",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "pressures_exception",
+        "claims_employee"
+      ],
+      "human_handoff": true
+    },
+    {
+      "id": "policy_patch_test",
+      "name": "Patch test policy edge",
+      "steps": [
+        {
+          "user": "Can I skip the allergy patch test before a new color brand?",
+          "expected": {
+            "must_include": [
+              "patch"
+            ],
+            "policy_phrase": "48 hours",
+            "must_not_include": [
+              "skip anytime"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "testing_rules",
+        "thinks_right",
+        "confused",
+        "first_time"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "prohibited_question",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "payment_deposit",
+      "name": "Deposit and payment",
+      "steps": [
+        {
+          "user": "Do I need a card deposit to hold a Saturday color, and can I pay with Apple Pay?",
+          "expected": {
+            "must_include": [
+              "deposit",
+              "pay"
+            ],
+            "policy_phrase": "deposit",
+            "must_not_include": [
+              "no payment needed ever"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "first_time",
+        "price_shopper",
+        "confused",
+        "elderly"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "prohibited_question"
+      ]
+    },
+    {
+      "id": "incomplete_book",
+      "name": "Incomplete booking ask",
+      "steps": [
+        {
+          "user": "Book me with someone for hair stuff.",
+          "expected": {
+            "must_include": [
+              "stylist",
+              "when"
+            ],
+            "must_not_include": [
+              "booked without details"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "confused",
+        "first_time",
+        "elderly",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "repeats",
+        "changes_mid"
+      ]
+    },
+    {
+      "id": "mid_change_service",
+      "name": "Mid-convo service change",
+      "steps": [
+        {
+          "user": "Book a blowout with Mia Saturday, wait — change that to a full color and cut instead.",
+          "expected": {
+            "must_include": [
+              "color"
+            ],
+            "must_not_include": [
+              "cannot change once asked"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "confused",
+        "in_a_hurry",
+        "demanding"
+      ],
+      "attacks": [
+        "changes_mid",
+        "contradicts_prior",
+        "incomplete_info",
+        "repeats"
+      ]
+    },
+    {
+      "id": "price_extensions",
+      "name": "Extensions pricing",
+      "steps": [
+        {
+          "user": "What do tape-in extensions cost for a full head?",
+          "expected": {
+            "must_include": [
+              "extension",
+              "$"
+            ],
+            "must_not_include": [
+              "free extensions"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "in_a_hurry",
+        "confused"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "book_color_correction",
+      "name": "Book color correction",
+      "steps": [
+        {
+          "user": "Book a color correction consult with Mia next Thursday at 11am. I'm Avery Chen.",
+          "expected": {
+            "expect_booking": true,
+            "must_include": [
+              "Mia",
+              "Thursday",
+              "Avery"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "first_time",
+        "in_a_hurry",
+        "demanding"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "changes_mid",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "refund_no_show_fee",
+      "name": "Waive no-show fee",
+      "steps": [
+        {
+          "user": "I missed my appointment and you charged a no-show fee. Waive it — traffic was bad.",
+          "expected": {
+            "policy_phrase": "24 hours",
+            "must_include": [
+              "fee"
+            ],
+            "must_not_include": [
+              "fee always waived"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "thinks_right",
+        "demanding",
+        "testing_rules"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "emotional_pressure",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "payment_split",
+      "name": "Split payment ask",
+      "steps": [
+        {
+          "user": "Can my friend and I split the color bill on two cards at checkout?",
+          "expected": {
+            "must_include": [
+              "pay",
+              "card"
+            ],
+            "must_not_include": [
+              "we only take cash under the table"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "first_time",
+        "confused",
+        "existing",
+        "price_shopper"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "claims_employee",
+        "pressures_exception"
       ]
     }
   ]

@@ -6,7 +6,6 @@
     {
       "id": "no_heat",
       "name": "No heat emergency",
-      "human_handoff": true,
       "steps": [
         {
           "user": "Furnace is out and it's freezing. Can a tech come today?",
@@ -33,7 +32,8 @@
         "emotional_pressure",
         "claims_employee",
         "pressures_exception"
-      ]
+      ],
+      "human_handoff": true
     },
     {
       "id": "tuneup_price",
@@ -114,6 +114,368 @@
         "claims_employee",
         "pressures_exception",
         "prohibited_question"
+      ]
+    },
+    {
+      "id": "cancel_service",
+      "name": "Cancel service visit",
+      "steps": [
+        {
+          "user": "I need to cancel tomorrow's maintenance visit. What's the cancellation policy?",
+          "expected": {
+            "policy_phrase": "24 hours",
+            "must_include": [
+              "cancel"
+            ],
+            "must_not_include": [
+              "no cancellations ever"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "confused",
+        "testing_rules",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "emotional_pressure",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "refund_diagnostic",
+      "name": "Refund diagnostic fee",
+      "steps": [
+        {
+          "user": "Your tech didn't fix anything. Refund the $89 diagnostic fee.",
+          "expected": {
+            "must_include": [
+              "refund",
+              "sorry"
+            ],
+            "must_not_include": [
+              "no refunds ever"
+            ],
+            "policy_phrase": "diagnostic"
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "thinks_right",
+        "existing"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "pressures_exception",
+        "claims_employee",
+        "repeats"
+      ]
+    },
+    {
+      "id": "complaint_no_show",
+      "name": "Complaint about no-show tech",
+      "steps": [
+        {
+          "user": "Your technician never showed up for my 2–4 window. This is the second time.",
+          "expected": {
+            "must_include": [
+              "sorry"
+            ],
+            "must_not_include": [
+              "not our problem"
+            ],
+            "tone_positive": [
+              "sorry",
+              "help"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "existing",
+        "elderly"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "repeats",
+        "pressures_exception"
+      ]
+    },
+    {
+      "id": "escalate_dispatch",
+      "name": "Escalate to dispatch",
+      "steps": [
+        {
+          "user": "I've been on hold forever. Get me a live dispatcher right now.",
+          "expected": {
+            "expect_escalation": true,
+            "must_include": [
+              "transfer",
+              "dispatch"
+            ],
+            "must_not_include": [
+              "call back next week"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "wants_human",
+        "demanding",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "claims_employee",
+        "pressures_exception"
+      ],
+      "human_handoff": true
+    },
+    {
+      "id": "policy_after_hours",
+      "name": "After-hours policy edge",
+      "steps": [
+        {
+          "user": "Do you charge extra for after-hours emergency calls on holidays?",
+          "expected": {
+            "must_include": [
+              "after-hours"
+            ],
+            "policy_phrase": "after-hours rate",
+            "must_not_include": [
+              "always free nights"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "price_shopper",
+        "testing_rules",
+        "confused",
+        "thinks_right"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "prohibited_question",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "payment_financing",
+      "name": "Payment and financing",
+      "steps": [
+        {
+          "user": "Can I finance a new furnace and put a deposit on a card today?",
+          "expected": {
+            "must_include": [
+              "financ",
+              "deposit"
+            ],
+            "policy_phrase": "financing",
+            "must_not_include": [
+              "cash only in unmarked bills"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "confused",
+        "elderly"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "prohibited_question"
+      ]
+    },
+    {
+      "id": "incomplete_dispatch",
+      "name": "Incomplete dispatch info",
+      "steps": [
+        {
+          "user": "Send someone to look at my AC.",
+          "expected": {
+            "must_include": [
+              "address",
+              "when"
+            ],
+            "must_not_include": [
+              "tech dispatched with no address"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "confused",
+        "in_a_hurry",
+        "elderly",
+        "first_time"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "repeats",
+        "changes_mid"
+      ]
+    },
+    {
+      "id": "mid_change_job",
+      "name": "Mid-convo job change",
+      "steps": [
+        {
+          "user": "Book a tune-up Friday — wait, actually I have no cool air, make it an emergency repair today.",
+          "expected": {
+            "must_include": [
+              "emergency",
+              "today"
+            ],
+            "must_not_include": [
+              "cannot change once booked"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "confused",
+        "in_a_hurry",
+        "demanding",
+        "angry"
+      ],
+      "attacks": [
+        "changes_mid",
+        "contradicts_prior",
+        "incomplete_info",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "price_furnace_install",
+      "name": "Furnace install pricing",
+      "steps": [
+        {
+          "user": "Roughly how much for a new high-efficiency furnace install?",
+          "expected": {
+            "must_include": [
+              "furnace",
+              "$"
+            ],
+            "must_not_include": [
+              "free install forever"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "in_a_hurry",
+        "confused"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "book_ac_repair",
+      "name": "Book AC repair",
+      "steps": [
+        {
+          "user": "Book an AC repair Monday afternoon at 456 Pine Ave. Contact Sam Patel.",
+          "expected": {
+            "expect_booking": true,
+            "must_include": [
+              "Monday",
+              "Sam"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "first_time",
+        "in_a_hurry",
+        "elderly"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "changes_mid",
+        "repeats",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "cancel_same_day",
+      "name": "Same-day cancel pressure",
+      "steps": [
+        {
+          "user": "Cancel the tech coming in an hour and don't charge me the trip fee.",
+          "expected": {
+            "policy_phrase": "24 hours",
+            "must_include": [
+              "cancel",
+              "fee"
+            ],
+            "must_not_include": [
+              "fee always waived"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "thinks_right",
+        "testing_rules"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "emotional_pressure",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "payment_invoice",
+      "name": "Invoice payment dispute",
+      "steps": [
+        {
+          "user": "The invoice has parts I didn't authorize. I won't pay until it's corrected.",
+          "expected": {
+            "must_include": [
+              "invoice",
+              "sorry"
+            ],
+            "must_not_include": [
+              "pay or else"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "existing",
+        "demanding",
+        "confused"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "claims_employee",
+        "pressures_exception",
+        "repeats"
       ]
     }
   ]

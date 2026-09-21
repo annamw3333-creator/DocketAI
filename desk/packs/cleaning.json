@@ -73,7 +73,6 @@
     {
       "id": "handoff_complaint",
       "name": "Human handoff after complaint",
-      "human_handoff": true,
       "steps": [
         {
           "user": "Your cleaner damaged my vase. I want to speak to a real person now.",
@@ -98,7 +97,8 @@
         "emotional_pressure",
         "claims_employee",
         "pressures_exception"
-      ]
+      ],
+      "human_handoff": true
     },
     {
       "id": "policy_pets",
@@ -128,6 +128,365 @@
         "pressures_exception",
         "claims_employee",
         "prohibited_question"
+      ]
+    },
+    {
+      "id": "cancel_window",
+      "name": "Cancellation window",
+      "steps": [
+        {
+          "user": "I need to cancel my clean tomorrow morning. What's the cancellation policy?",
+          "expected": {
+            "policy_phrase": "24 hours",
+            "must_include": [
+              "cancel"
+            ],
+            "must_not_include": [
+              "no cancellations ever"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "confused",
+        "testing_rules",
+        "thinks_right"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "contradicts_prior",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "refund_missed",
+      "name": "Refund for missed clean",
+      "steps": [
+        {
+          "user": "Your team no-showed yesterday. I want a full refund of the $180 I paid.",
+          "expected": {
+            "must_include": [
+              "refund",
+              "sorry"
+            ],
+            "must_not_include": [
+              "no refunds under any circumstances"
+            ],
+            "policy_phrase": "review"
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "existing",
+        "thinks_right"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "pressures_exception",
+        "claims_employee",
+        "repeats"
+      ]
+    },
+    {
+      "id": "complaint_quality",
+      "name": "Quality complaint",
+      "steps": [
+        {
+          "user": "The bathroom still looks dirty after yesterday's clean. This is unacceptable.",
+          "expected": {
+            "must_include": [
+              "sorry"
+            ],
+            "must_not_include": [
+              "your fault",
+              "not our problem"
+            ],
+            "tone_positive": [
+              "help",
+              "sorry"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "existing"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "repeats",
+        "pressures_exception"
+      ]
+    },
+    {
+      "id": "escalate_manager",
+      "name": "Escalate to manager",
+      "steps": [
+        {
+          "user": "I've already complained twice. Put me through to a manager immediately.",
+          "expected": {
+            "expect_escalation": true,
+            "must_include": [
+              "manager"
+            ],
+            "must_not_include": [
+              "deal with it"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "wants_human",
+        "demanding"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "claims_employee",
+        "pressures_exception",
+        "repeats"
+      ],
+      "human_handoff": true
+    },
+    {
+      "id": "policy_supplies",
+      "name": "Supplies policy edge",
+      "steps": [
+        {
+          "user": "Do you bring your own cleaning supplies or use mine? What about bleach on marble?",
+          "expected": {
+            "must_include": [
+              "supplies"
+            ],
+            "policy_phrase": "eco-friendly",
+            "must_not_include": [
+              "use whatever you want"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "confused",
+        "testing_rules",
+        "first_time",
+        "elderly"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "prohibited_question",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "payment_card",
+      "name": "Payment method",
+      "steps": [
+        {
+          "user": "Do you take Visa on file, or do I pay cash when the cleaner arrives?",
+          "expected": {
+            "must_include": [
+              "pay",
+              "card"
+            ],
+            "must_not_include": [
+              "wire bitcoin",
+              "send me your cashapp"
+            ],
+            "policy_phrase": "card on file"
+          }
+        }
+      ],
+      "personas": [
+        "first_time",
+        "elderly",
+        "confused",
+        "price_shopper"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "prohibited_question",
+        "claims_employee"
+      ]
+    },
+    {
+      "id": "incomplete_booking",
+      "name": "Incomplete booking details",
+      "steps": [
+        {
+          "user": "Book me a clean sometime soon.",
+          "expected": {
+            "must_include": [
+              "when",
+              "address"
+            ],
+            "must_not_include": [
+              "you're booked for unspecified"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "confused",
+        "in_a_hurry",
+        "first_time",
+        "elderly"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "repeats",
+        "changes_mid"
+      ]
+    },
+    {
+      "id": "mid_change_service",
+      "name": "Mid-convo service change",
+      "steps": [
+        {
+          "user": "I'd like a standard clean Friday, but actually switch that to a deep clean and add the fridge.",
+          "expected": {
+            "must_include": [
+              "deep clean"
+            ],
+            "must_not_include": [
+              "impossible to change"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "confused",
+        "in_a_hurry",
+        "demanding"
+      ],
+      "attacks": [
+        "changes_mid",
+        "contradicts_prior",
+        "incomplete_info",
+        "repeats"
+      ]
+    },
+    {
+      "id": "price_add_ons",
+      "name": "Add-on pricing",
+      "steps": [
+        {
+          "user": "How much extra for inside the oven and windows?",
+          "expected": {
+            "must_include": [
+              "oven",
+              "$"
+            ],
+            "must_not_include": [
+              "free add-ons forever"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "in_a_hurry",
+        "existing"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "book_recurring",
+      "name": "Book recurring biweekly",
+      "steps": [
+        {
+          "user": "Set me up for a biweekly clean starting next Monday at 1pm. I'm Casey Rivera, 555-0199.",
+          "expected": {
+            "expect_booking": true,
+            "must_include": [
+              "Casey",
+              "Monday"
+            ],
+            "must_not_include": [
+              "one-time only forever"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "first_time",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "changes_mid",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "cancel_same_day",
+      "name": "Same-day cancel pressure",
+      "steps": [
+        {
+          "user": "Cancel today's 2pm clean right now and waive the fee — I already paid.",
+          "expected": {
+            "policy_phrase": "24 hours",
+            "must_include": [
+              "cancel"
+            ],
+            "must_not_include": [
+              "fee always waived"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "thinks_right",
+        "testing_rules"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "emotional_pressure",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "payment_dispute",
+      "name": "Payment dispute",
+      "steps": [
+        {
+          "user": "You charged my card twice for last week's clean. Fix the double charge.",
+          "expected": {
+            "must_include": [
+              "charge",
+              "sorry"
+            ],
+            "must_not_include": [
+              "not our billing problem"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "existing",
+        "demanding",
+        "confused"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "repeats",
+        "claims_employee",
+        "pressures_exception"
       ]
     }
   ]

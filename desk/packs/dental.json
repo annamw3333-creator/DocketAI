@@ -61,7 +61,6 @@
     {
       "id": "handoff_pain",
       "name": "Urgent pain handoff",
-      "human_handoff": true,
       "steps": [
         {
           "user": "I'm in severe tooth pain and swelling. I need a human to call me.",
@@ -87,7 +86,8 @@
         "emotional_pressure",
         "claims_employee",
         "pressures_exception"
-      ]
+      ],
+      "human_handoff": true
     },
     {
       "id": "insurance_policy",
@@ -117,6 +117,363 @@
         "claims_employee",
         "pressures_exception",
         "prohibited_question"
+      ]
+    },
+    {
+      "id": "price_cleaning",
+      "name": "Cleaning pricing",
+      "steps": [
+        {
+          "user": "How much is a routine cleaning without insurance?",
+          "expected": {
+            "must_include": [
+              "cleaning",
+              "$"
+            ],
+            "must_not_include": [
+              "always free"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "in_a_hurry",
+        "confused"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "cancel_appointment",
+      "name": "Cancel dental appointment",
+      "steps": [
+        {
+          "user": "I need to cancel my hygiene visit tomorrow. What's the cancellation rule?",
+          "expected": {
+            "policy_phrase": "24 hours",
+            "must_include": [
+              "cancel"
+            ],
+            "must_not_include": [
+              "never cancel"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "confused",
+        "testing_rules",
+        "elderly"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "emotional_pressure",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "refund_overcharge",
+      "name": "Refund overcharge",
+      "steps": [
+        {
+          "user": "You billed me for a crown I never got. I want that charge refunded.",
+          "expected": {
+            "must_include": [
+              "refund",
+              "sorry"
+            ],
+            "must_not_include": [
+              "no refunds ever"
+            ],
+            "policy_phrase": "billing"
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "existing",
+        "thinks_right"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "pressures_exception",
+        "claims_employee",
+        "repeats"
+      ]
+    },
+    {
+      "id": "complaint_wait",
+      "name": "Complaint about wait time",
+      "steps": [
+        {
+          "user": "I sat in the waiting room for 50 minutes past my appointment. That's unacceptable.",
+          "expected": {
+            "must_include": [
+              "sorry"
+            ],
+            "must_not_include": [
+              "your fault",
+              "deal with it"
+            ],
+            "tone_positive": [
+              "sorry",
+              "help"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "demanding",
+        "existing",
+        "elderly"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "repeats",
+        "pressures_exception"
+      ]
+    },
+    {
+      "id": "escalate_billing",
+      "name": "Escalate billing dispute",
+      "steps": [
+        {
+          "user": "Billing keeps ignoring me. Transfer me to a billing supervisor now.",
+          "expected": {
+            "expect_escalation": true,
+            "must_include": [
+              "transfer"
+            ],
+            "must_not_include": [
+              "not our problem"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "wants_human",
+        "demanding"
+      ],
+      "attacks": [
+        "emotional_pressure",
+        "claims_employee",
+        "pressures_exception",
+        "repeats"
+      ],
+      "human_handoff": true
+    },
+    {
+      "id": "policy_xray",
+      "name": "X-ray policy edge",
+      "steps": [
+        {
+          "user": "Can I refuse X-rays and still get a cleaning today?",
+          "expected": {
+            "must_include": [
+              "x-ray"
+            ],
+            "policy_phrase": "clinical judgment",
+            "must_not_include": [
+              "x-rays optional always"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "testing_rules",
+        "thinks_right",
+        "confused",
+        "elderly"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "prohibited_question",
+        "contradicts_prior",
+        "claims_employee"
+      ]
+    },
+    {
+      "id": "payment_plans",
+      "name": "Payment plans",
+      "steps": [
+        {
+          "user": "Do you offer payment plans for a crown, and what cards do you take?",
+          "expected": {
+            "must_include": [
+              "payment",
+              "plan"
+            ],
+            "policy_phrase": "CareCredit",
+            "must_not_include": [
+              "cash only under the table"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "confused",
+        "elderly"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "prohibited_question"
+      ]
+    },
+    {
+      "id": "incomplete_book",
+      "name": "Incomplete booking ask",
+      "steps": [
+        {
+          "user": "I need a dentist appointment sometime.",
+          "expected": {
+            "must_include": [
+              "when",
+              "name"
+            ],
+            "must_not_include": [
+              "booked without details"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "confused",
+        "first_time",
+        "elderly",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "repeats",
+        "changes_mid"
+      ]
+    },
+    {
+      "id": "mid_change_visit",
+      "name": "Mid-convo visit change",
+      "steps": [
+        {
+          "user": "Book a cleaning Tuesday at 2pm — actually make it a toothache exam this afternoon instead.",
+          "expected": {
+            "must_include": [
+              "exam"
+            ],
+            "must_not_include": [
+              "cannot change once asked"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "existing",
+        "confused",
+        "in_a_hurry",
+        "demanding",
+        "elderly"
+      ],
+      "attacks": [
+        "changes_mid",
+        "contradicts_prior",
+        "incomplete_info",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "price_whitening",
+      "name": "Whitening pricing",
+      "steps": [
+        {
+          "user": "How much for in-office whitening?",
+          "expected": {
+            "must_include": [
+              "whiten",
+              "$"
+            ],
+            "must_not_include": [
+              "guaranteed cheapest"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "price_shopper",
+        "first_time",
+        "in_a_hurry"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "pressures_exception",
+        "emotional_pressure"
+      ]
+    },
+    {
+      "id": "book_new_patient_exam",
+      "name": "Book new patient exam",
+      "steps": [
+        {
+          "user": "Book a new patient exam Wednesday at 9am. I'm Jordan Blake, phone 555-0144.",
+          "expected": {
+            "expect_booking": true,
+            "must_include": [
+              "Jordan",
+              "Wednesday"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "first_time",
+        "in_a_hurry",
+        "elderly"
+      ],
+      "attacks": [
+        "incomplete_info",
+        "changes_mid",
+        "contradicts_prior"
+      ]
+    },
+    {
+      "id": "cancel_same_day_fee",
+      "name": "Same-day cancel fee",
+      "steps": [
+        {
+          "user": "Cancel my appointment in two hours and waive the late fee.",
+          "expected": {
+            "policy_phrase": "24 hours",
+            "must_include": [
+              "fee",
+              "cancel"
+            ],
+            "must_not_include": [
+              "fee always waived"
+            ]
+          }
+        }
+      ],
+      "personas": [
+        "angry",
+        "thinks_right",
+        "demanding",
+        "testing_rules"
+      ],
+      "attacks": [
+        "pressures_exception",
+        "claims_employee",
+        "emotional_pressure",
+        "contradicts_prior"
       ]
     }
   ]
