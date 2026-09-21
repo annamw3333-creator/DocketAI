@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { TextInput, Text, StyleSheet } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { Screen, Title, Subtitle, Card, Button, Badge, ErrorBox } from "@/src/components";
+import { Screen, Title, Subtitle, Card, Button, Badge, ErrorBox, SectionLabel } from "@/src/components";
 import { DEFAULT_API_URL, getApiUrl, setApiUrl } from "@/src/settings";
 import { fetchHealth } from "@/src/api";
 import { colors, spacing, type } from "@/src/theme";
@@ -41,10 +41,11 @@ export default function SettingsScreen() {
   return (
     <Screen>
       <Title>Settings</Title>
-      <Subtitle>Point DocketAI at your Docket Desk API (LAN IP, ngrok, or emulator loopback).</Subtitle>
+      <Subtitle>Point DocketAI at your Docket Desk API.</Subtitle>
 
+      <SectionLabel>API</SectionLabel>
       <Card>
-        <Text style={styles.label}>API URL</Text>
+        <Text style={styles.label}>URL</Text>
         <TextInput
           value={url}
           onChangeText={(t) => {
@@ -59,39 +60,60 @@ export default function SettingsScreen() {
           style={styles.input}
         />
         <Text style={styles.hint}>
-          Emulator → host: http://10.0.2.2:8080 · Physical device → http://&lt;desk-lan-ip&gt;:8080
+          Emulator → http://10.0.2.2:8080 · Device → http://&lt;lan-ip&gt;:8080
         </Text>
         <Button title="Save" onPress={onSave} />
-        <Button title="Test /health" onPress={onTest} variant="ghost" />
+        <Button title="Test /health" onPress={onTest} variant="text" />
         {saved ? <Badge label="Saved" tone="ok" /> : null}
         {ping === "ok" ? <Badge label={`OK · ${msg}`} tone="ok" /> : null}
         {ping === "err" ? <ErrorBox message={msg} /> : null}
       </Card>
 
+      <SectionLabel>About</SectionLabel>
       <Card>
-        <Text style={styles.label}>App</Text>
-        <Text style={styles.meta}>DocketAI 1.1.0 · com.docketai.app</Text>
-        <Text style={styles.meta}>JS embedded in APK (no Metro required for sideload).</Text>
+        <Text style={styles.meta}>DocketAI 1.2.0</Text>
+        <Text style={styles.meta}>com.docketai.app</Text>
+        <Text style={styles.meta}>JS embedded · no Metro required</Text>
       </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  label: { color: colors.text, fontWeight: type.mediumWeight, fontSize: 15, marginBottom: spacing.xs, letterSpacing: type.letterSpacing },
+  label: {
+    color: colors.muted,
+    fontWeight: type.labelWeight,
+    fontSize: 11,
+    marginBottom: spacing.xs,
+    letterSpacing: type.labelTracking,
+    textTransform: "uppercase",
+  },
   input: {
     backgroundColor: colors.bg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     borderRadius: 2,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     color: colors.text,
     fontSize: 14,
     fontWeight: type.bodyWeight,
     letterSpacing: type.letterSpacing,
     marginBottom: spacing.sm,
   },
-  hint: { color: colors.muted, fontSize: 12, lineHeight: 18, marginBottom: spacing.sm, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 4, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
+  hint: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: spacing.md,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+  },
+  meta: {
+    color: colors.muted,
+    fontSize: 13,
+    marginTop: 4,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+  },
 });

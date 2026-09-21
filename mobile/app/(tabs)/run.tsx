@@ -10,7 +10,7 @@ import {
   Loading,
   ErrorBox,
   ScoreBar,
-  Badge,
+  SectionLabel,
 } from "@/src/components";
 import { fetchBots, fetchPacks, runMysteryShop, setBaseline, fetchBaseline, Pack } from "@/src/api";
 import { colors, spacing, type } from "@/src/theme";
@@ -94,11 +94,11 @@ export default function RunScreen() {
   return (
     <Screen>
       <Title>Run</Title>
-      <Subtitle>Select a bot and pack, then mystery-shop. Capture Baseline or Re-check after KB updates.</Subtitle>
+      <Subtitle>Select a bot and pack, then mystery-shop.</Subtitle>
 
       {error ? <ErrorBox message={error} /> : null}
 
-      <Text style={styles.section}>Bot</Text>
+      <SectionLabel>Bot</SectionLabel>
       {bots.length === 0 && !error ? <Loading /> : null}
       {bots.map((b) => (
         <Card key={b.id} onPress={() => setBotId(b.id)} selected={botId === b.id}>
@@ -107,7 +107,7 @@ export default function RunScreen() {
         </Card>
       ))}
 
-      <Text style={styles.section}>Pack</Text>
+      <SectionLabel>Pack</SectionLabel>
       {packs.map((p) => (
         <Card key={p.id} onPress={() => setPackId(p.id)} selected={packId === p.id}>
           <Text style={styles.cardTitle}>{p.name}</Text>
@@ -118,34 +118,45 @@ export default function RunScreen() {
         </Card>
       ))}
 
-      <Button title={busy ? "Running…" : "Run mystery shop"} onPress={onRun} disabled={busy || !packId || !botId} />
-      <Button title="Save as Baseline" onPress={onBaseline} disabled={busy || !packId} variant="ghost" />
+      <Button
+        title={busy ? "Running…" : "Run mystery shop"}
+        onPress={onRun}
+        disabled={busy || !packId || !botId}
+      />
+      <Button
+        title="Save as Baseline"
+        onPress={onBaseline}
+        disabled={busy || !packId}
+        variant="text"
+      />
 
+      <SectionLabel>Regression</SectionLabel>
       <Card>
-        <Text style={styles.section}>Regression · Baseline vs Re-check</Text>
         <View style={styles.compareRow}>
           <View style={styles.compareCol}>
-            <Badge label="Baseline" tone="muted" />
+            <Text style={styles.compareLabel}>BASELINE</Text>
             <Text style={styles.bigPct}>{basePct != null ? `${Math.round(basePct)}%` : "—"}</Text>
-            <Text style={styles.meta}>before</Text>
           </View>
           <View style={styles.compareCol}>
-            <Badge label="Re-check" tone="gold" />
-            <Text style={styles.bigPct}>{recheckPct != null ? `${Math.round(recheckPct)}%` : "—"}</Text>
-            <Text style={styles.meta}>after</Text>
-          </View>
-          <View style={styles.compareCol}>
-            <Badge
-              label="Δ"
-              tone={delta == null ? "muted" : delta >= 0 ? "ok" : "danger"}
-            />
+            <Text style={styles.compareLabel}>RE-CHECK</Text>
             <Text style={styles.bigPct}>
+              {recheckPct != null ? `${Math.round(recheckPct)}%` : "—"}
+            </Text>
+          </View>
+          <View style={styles.compareCol}>
+            <Text style={styles.compareLabel}>DELTA</Text>
+            <Text
+              style={[
+                styles.bigPct,
+                delta != null && delta < 0 ? { color: colors.danger } : null,
+                delta != null && delta >= 0 ? { color: colors.gold } : null,
+              ]}
+            >
               {delta == null ? "—" : `${delta > 0 ? "+" : ""}${delta}%`}
             </Text>
-            <Text style={styles.meta}>change</Text>
           </View>
         </View>
-        {runId ? <Text style={styles.meta}>Last run: {runId}</Text> : null}
+        {runId ? <Text style={styles.meta}>Last run · {runId}</Text> : null}
         {lastScores
           ? Object.entries(lastScores)
               .filter(([k]) => k.toLowerCase() !== "overall")
@@ -157,10 +168,35 @@ export default function RunScreen() {
 }
 
 const styles = StyleSheet.create({
-  section: { color: colors.text, fontWeight: type.mediumWeight, fontSize: 15, marginTop: spacing.md, marginBottom: spacing.xs, letterSpacing: type.letterSpacing },
-  cardTitle: { color: colors.text, fontWeight: type.labelWeight, fontSize: 15, letterSpacing: type.letterSpacing },
-  meta: { color: colors.muted, fontSize: 12, marginTop: 2, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
-  compareRow: { flexDirection: "row", justifyContent: "space-between", marginTop: spacing.sm, marginBottom: spacing.md },
-  compareCol: { flex: 1, alignItems: "center", gap: 6 },
-  bigPct: { color: colors.text, fontSize: 28, fontWeight: type.mediumWeight, letterSpacing: type.letterSpacing },
+  cardTitle: {
+    color: colors.text,
+    fontWeight: type.bodyWeight,
+    fontSize: 15,
+    letterSpacing: type.letterSpacing,
+  },
+  meta: {
+    color: colors.muted,
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+  },
+  compareRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: spacing.md,
+  },
+  compareCol: { flex: 1, alignItems: "flex-start", gap: 8 },
+  compareLabel: {
+    color: colors.muted,
+    fontSize: 10,
+    letterSpacing: type.labelTracking,
+    fontWeight: type.labelWeight,
+  },
+  bigPct: {
+    color: colors.text,
+    fontSize: 28,
+    fontWeight: type.titleWeight,
+    letterSpacing: type.letterSpacing,
+  },
 });

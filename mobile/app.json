@@ -2,9 +2,9 @@
   "expo": {
     "name": "DocketAI",
     "slug": "docketai",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "DocketAI \u2014 mystery-shop QA for customer-service chatbots.",
-    "primaryColor": "#C9A227",
+    "primaryColor": "#000000",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "docketai",
@@ -17,7 +17,7 @@
     },
     "android": {
       "package": "com.docketai.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000000"

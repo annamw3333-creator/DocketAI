@@ -1,13 +1,15 @@
 import React, { useMemo, useState } from "react";
-import { Text, StyleSheet, View } from "react-native";
-import { Screen, Title, Subtitle, Card, Badge, Button } from "@/src/components";
+import { Text, StyleSheet, View, Pressable } from "react-native";
+import { Screen, Title, Subtitle, Card, Badge, SectionLabel } from "@/src/components";
 import { PERSONAS, ATTACKS, PersonaId, AttackId } from "@/src/library";
 import { colors, spacing, type } from "@/src/theme";
+
+type Mode = "personas" | "attacks" | "pair";
 
 export default function LibraryScreen() {
   const [persona, setPersona] = useState<PersonaId | null>(null);
   const [attack, setAttack] = useState<AttackId | null>(null);
-  const [mode, setMode] = useState<"personas" | "attacks" | "matrix">("personas");
+  const [mode, setMode] = useState<Mode>("personas");
 
   const pair = useMemo(() => {
     const p = PERSONAS.find((x) => x.id === persona);
@@ -20,13 +22,18 @@ export default function LibraryScreen() {
     <Screen>
       <Title>Library</Title>
       <Subtitle>
-        {PERSONAS.length} personas × {ATTACKS.length} attacks — mix for tougher mystery shops.
+        {PERSONAS.length} personas · {ATTACKS.length} attacks
       </Subtitle>
 
       <View style={styles.modeRow}>
-        <Button title="Personas" onPress={() => setMode("personas")} variant={mode === "personas" ? "primary" : "ghost"} />
-        <Button title="Attacks" onPress={() => setMode("attacks")} variant={mode === "attacks" ? "primary" : "ghost"} />
-        <Button title="Pair" onPress={() => setMode("matrix")} variant={mode === "matrix" ? "primary" : "ghost"} />
+        {(["personas", "attacks", "pair"] as Mode[]).map((m) => (
+          <Pressable key={m} onPress={() => setMode(m)} style={styles.modeItem}>
+            <Text style={[styles.modeLabel, mode === m && styles.modeActive]}>
+              {m.toUpperCase()}
+            </Text>
+            {mode === m ? <View style={styles.modeUnderline} /> : <View style={styles.modeSpacer} />}
+          </Pressable>
+        ))}
       </View>
 
       {mode === "personas"
@@ -47,23 +54,26 @@ export default function LibraryScreen() {
           ))
         : null}
 
-      {mode === "matrix" ? (
+      {mode === "pair" ? (
         <Card>
-          <Text style={styles.cardTitle}>Selected pair</Text>
+          <SectionLabel>Selected</SectionLabel>
           <View style={styles.badges}>
-            <Badge label={persona ? PERSONAS.find((p) => p.id === persona)!.label : "Pick persona"} tone={persona ? "gold" : "muted"} />
-            <Badge label={attack ? ATTACKS.find((a) => a.id === attack)!.label : "Pick attack"} tone={attack ? "warn" : "muted"} />
+            <Badge
+              label={persona ? PERSONAS.find((p) => p.id === persona)!.label : "Persona"}
+              tone={persona ? "gold" : "muted"}
+            />
+            <Badge
+              label={attack ? ATTACKS.find((a) => a.id === attack)!.label : "Attack"}
+              tone={attack ? "gold" : "muted"}
+            />
           </View>
           {pair ? (
             <Text style={styles.meta}>
-              Scenario stub: a {pair.p.label.toLowerCase()} customer who {pair.a.label.toLowerCase()}. Use this combo when authoring pack scenarios or live probes.
+              A {pair.p.label.toLowerCase()} customer who {pair.a.label.toLowerCase()}.
             </Text>
           ) : (
-            <Text style={styles.meta}>Select a persona (Personas tab) and an attack (Attacks tab), then return here.</Text>
+            <Text style={styles.meta}>Choose a persona and an attack, then return here.</Text>
           )}
-          <Text style={styles.hint}>
-            Tip: prompt injection + testing rules is a high-risk pair; wants human + emotional pressure tests handoff quality.
-          </Text>
         </Card>
       ) : null}
     </Screen>
@@ -71,9 +81,40 @@ export default function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  modeRow: { gap: 4, marginBottom: spacing.sm },
-  cardTitle: { color: colors.text, fontWeight: type.labelWeight, fontSize: 15, letterSpacing: type.letterSpacing },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 4, lineHeight: 20, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
-  badges: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginVertical: spacing.sm },
-  hint: { color: colors.goldDim, fontSize: 12, marginTop: spacing.md, lineHeight: 18, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
+  modeRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  modeItem: { paddingBottom: spacing.sm },
+  modeLabel: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: type.labelWeight,
+    letterSpacing: type.labelTracking,
+  },
+  modeActive: { color: colors.text },
+  modeUnderline: {
+    marginTop: spacing.sm,
+    height: StyleSheet.hairlineWidth * 2,
+    backgroundColor: colors.gold,
+  },
+  modeSpacer: { marginTop: spacing.sm, height: StyleSheet.hairlineWidth * 2 },
+  cardTitle: {
+    color: colors.text,
+    fontWeight: type.bodyWeight,
+    fontSize: 15,
+    letterSpacing: type.letterSpacing,
+  },
+  meta: {
+    color: colors.muted,
+    fontSize: 13,
+    marginTop: 6,
+    lineHeight: 20,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+  },
+  badges: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginVertical: spacing.sm },
 });

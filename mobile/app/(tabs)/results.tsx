@@ -1,7 +1,18 @@
 import React, { useCallback, useState } from "react";
 import { Text, StyleSheet } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { Screen, Title, Subtitle, Card, Loading, ErrorBox, Badge, ScoreBar, Button } from "@/src/components";
+import {
+  Screen,
+  Title,
+  Subtitle,
+  Card,
+  Loading,
+  ErrorBox,
+  Badge,
+  ScoreBar,
+  Button,
+  SectionLabel,
+} from "@/src/components";
 import { fetchRuns, RunSummary } from "@/src/api";
 import { colors, spacing, type } from "@/src/theme";
 
@@ -32,25 +43,26 @@ export default function ResultsScreen() {
   return (
     <Screen>
       <Title>Results</Title>
-      <Subtitle>Recent mystery-shop runs and scorecards from Docket Desk.</Subtitle>
-      <Button title="Refresh" onPress={load} variant="ghost" />
+      <Subtitle>Recent mystery-shop runs from Docket Desk.</Subtitle>
+      <Button title="Refresh" onPress={load} variant="text" />
       {error ? <ErrorBox message={error} /> : null}
       {loading ? <Loading /> : null}
       {!loading && !error && runs.length === 0 ? (
         <Card>
-          <Text style={styles.empty}>No runs yet. Start one from the Run tab.</Text>
+          <Text style={styles.empty}>No runs yet.</Text>
         </Card>
       ) : null}
+      {!loading && runs.length > 0 ? <SectionLabel>History</SectionLabel> : null}
       {runs.map((r) => {
         const overall = r.scores?.overall ?? r.scores?.Overall;
         return (
           <Card key={r.id}>
             <Text style={styles.title}>{r.pack_id}</Text>
             <Text style={styles.meta}>
-              bot {r.bot_id} · {r.created_at || "—"}
+              {r.bot_id} · {r.created_at || "—"}
             </Text>
             {overall != null ? (
-              <Badge label={`Overall ${Math.round(Number(overall))}%`} tone="gold" />
+              <Badge label={`${Math.round(Number(overall))}% overall`} tone="gold" />
             ) : (
               <Badge label="No scores" tone="muted" />
             )}
@@ -69,8 +81,30 @@ export default function ResultsScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { color: colors.text, fontWeight: type.mediumWeight, fontSize: 16, marginBottom: 2, letterSpacing: type.letterSpacing },
-  meta: { color: colors.muted, fontSize: 12, marginBottom: spacing.sm, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
-  empty: { color: colors.muted, fontWeight: type.bodyWeight, letterSpacing: type.letterSpacing },
-  id: { color: colors.muted, fontSize: 10, marginTop: spacing.sm, fontFamily: "monospace", letterSpacing: type.letterSpacing },
+  title: {
+    color: colors.text,
+    fontWeight: type.bodyWeight,
+    fontSize: 16,
+    marginBottom: 4,
+    letterSpacing: type.letterSpacing,
+  },
+  meta: {
+    color: colors.muted,
+    fontSize: 12,
+    marginBottom: spacing.sm,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+  },
+  empty: {
+    color: colors.muted,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+  },
+  id: {
+    color: colors.muted,
+    fontSize: 10,
+    marginTop: spacing.sm,
+    fontFamily: "monospace",
+    letterSpacing: 0.4,
+  },
 });
