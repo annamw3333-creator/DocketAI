@@ -16,7 +16,7 @@ Chatbots drift. A FAQ edit or prompt tweak can quietly break tone, policy, or bo
 | Mobile | **Expo / React Native** Android app (`mobile/`) — `com.docketai.app` |
 | Optional embed | WordPress plugin (`wordpress-plugin/`) — same lineage as [docket-assistant](https://github.com/annamw3333-creator/docket-assistant) |
 
-**UI:** black / white / gold editorial theme (dark surfaces, `#C9A227` accents) — Home · Run · Results · Library · Settings.
+**UI:** black / white / gold editorial theme (dark surfaces, `#C9A227` accents) — Home · Run · Results · Build/Themes · Library · Settings. Widget themes are separate (customer-facing).
 
 **Live desk** (Render; free tier may cold-start): https://docketai-desk.onrender.com — `GET /health` → `{"status":"ok","service":"docket-desk"}`.
 
@@ -27,6 +27,10 @@ Chatbots drift. A FAQ edit or prompt tweak can quietly break tone, policy, or bo
 - **Persona × attack library (mobile)** — **11 personas × 10 attacks** (Library tab); used to frame stress scenarios
 - **Baseline vs re-check (mobile + desk)** — save pack scores with `POST /api/baselines/{pack_id}`, load with `GET /api/baselines/{pack_id}`; Run tab shows delta after a new mystery-shop
 - **Bake-off / reports / embed helpers** — see `desk/README.md` for desk-only endpoints
+- **Copyable prompt patches** — mystery-shop returns `patches`; mobile Results one-tap Copy / Copy all
+- **Brand → bot builder** — `POST /api/bots/from-brand` (SSRF-safe public fetch + draft prompt/FAQ); mobile Build tab
+- **Theme Studio + website embed** — 8 widget presets, `GET /api/themes`, `PATCH /api/bots/{id}/theme`, themed `/widget/{id}` + copyable embed snippet; mobile Build → Theme Studio
+- **Richer scorecards** — per-scenario pass/fail, severity, reasons, suggested fixes; baseline delta on Results
 
 ## Repo layout
 
@@ -48,7 +52,9 @@ cd desk
 Useful endpoints for the mobile app:
 
 - `GET /health`, `GET /api/packs`, `GET /api/bots`
-- `POST /api/mystery-shop`, `GET /api/runs`
+- `POST /api/mystery-shop`, `GET /api/runs`, `GET /api/runs/{run_id}`
+- `POST /api/bots/from-brand` — draft bot from public website URL
+- `GET /api/themes`, `PATCH /api/bots/{id}/theme`, `GET /api/bots/{id}/embed`
 - `POST /api/baselines/{pack_id}`, `GET /api/baselines/{pack_id}`
 
 Point the mobile **Settings** desk URL at your local or Render host.
@@ -63,7 +69,7 @@ yarn start
 ```
 
 Release APKs (embedded JS bundle — no Metro on device):  
-→ [DocketAI-releases](https://github.com/annamw3333-creator/DocketAI-releases/releases) (current **v1.2.0**)
+→ [DocketAI-releases](https://github.com/annamw3333-creator/DocketAI-releases/releases) (mobile **v1.3.0** in progress)
 
 Local release build sketch:
 

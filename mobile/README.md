@@ -1,13 +1,17 @@
 # DocketAI mobile
 
-Expo / React Native app — **DocketAI** (`com.docketai.app`) v1.0.0.
+Expo / React Native app — **DocketAI** (`com.docketai.app`) **v1.3.0**.
 
 ## Screens
-- **Home** — Desk API health, pack/bot counts
-- **Run** — pick bot + pack, mystery-shop, Baseline vs Re-check regression stub
-- **Results** — recent runs / scorecards
+- **Home** — 3-line product value + CTAs (Run / Build bot / Results); Desk health
+- **Run** — stepped flow: bot → pack → optional persona/attack → run; progress; deep-link to Results
+- **Results** — expandable scorecards, dimension bars, pass/fail scenarios, baseline delta, **copyable patches**
+- **Build** — brand URL + notes → draft system prompt/FAQ → bot selectable in Run
 - **Library** — personas × attacks
 - **Settings** — Desk API URL
+
+## Theme
+Black / white / gold editorial (no navy/teal).
 
 ## Build APK (JS embedded, no Metro)
 
@@ -27,3 +31,7 @@ Verify embedded bundle:
 ```bash
 unzip -l app-release.apk | grep index.android.bundle
 ```
+
+## Theme Studio (Build tab)
+
+Pick a widget look (8 presets), optional color/greeting overrides, live preview, then **Copy embed code** for WordPress / Squarespace / any HTML. Themes apply to the customer-facing widget only.

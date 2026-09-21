@@ -71,7 +71,7 @@ export default function SettingsScreen() {
 
       <SectionLabel>About</SectionLabel>
       <Card>
-        <Text style={styles.meta}>DocketAI 1.2.0</Text>
+        <Text style={styles.meta}>DocketAI 1.3.0</Text>
         <Text style={styles.meta}>com.docketai.app</Text>
         <Text style={styles.meta}>JS embedded · no Metro required</Text>
       </Card>

@@ -44,10 +44,24 @@ export default function HomeScreen() {
 
   return (
     <Screen>
-      <Hero
-        title="DOCKETAI"
-        subtitle="Mystery-shop QA for customer-service chatbots."
-      />
+      <Hero title="DOCKETAI" />
+
+      <Text style={styles.valueLine}>
+        Mystery-shop your customer-service chatbot before customers do.
+      </Text>
+      <Text style={styles.valueLine}>
+        Catch regressions after FAQ or prompt changes with baseline vs re-check.
+      </Text>
+      <Text style={styles.valueLine}>
+        Draft a branded bot, pick a look in Theme Studio, and embed it on your site.
+      </Text>
+
+      <SectionLabel>Start</SectionLabel>
+      <Button title="Build / Themes" onPress={() => router.push("/build")} />
+      <Button title="Run mystery shop" onPress={() => router.push("/run")} variant="ghost" />
+      <Button title="View results" onPress={() => router.push("/results")} variant="text" />
+
+      <Divider />
 
       <SectionLabel>Connection</SectionLabel>
       <Card>
@@ -62,29 +76,26 @@ export default function HomeScreen() {
         {status === "idle" ? <Loading label="Pinging…" /> : null}
         {status === "ok" ? (
           <Text style={styles.meta}>
-            {detail} · {packCount} packs · {botCount} bots
+            {detail} · {packCount} packs · {botCount} bots · {PERSONAS.length} personas ·{" "}
+            {ATTACKS.length} attacks
           </Text>
         ) : null}
         {status === "err" ? <Text style={styles.err}>{detail}</Text> : null}
       </Card>
-
-      <Divider />
-
-      <SectionLabel>Library</SectionLabel>
-      <Text style={styles.meta}>
-        {PERSONAS.length} personas · {ATTACKS.length} attacks
-      </Text>
-      <Button title="Browse library" onPress={() => router.push("/library")} variant="text" />
-
-      <SectionLabel>Start</SectionLabel>
-      <Text style={styles.meta}>Run a pack, then compare Baseline vs Re-check.</Text>
-      <Button title="Run a pack" onPress={() => router.push("/run")} />
-      <Button title="View results" onPress={() => router.push("/results")} variant="text" />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  valueLine: {
+    color: colors.muted,
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: type.bodyWeight,
+    letterSpacing: type.letterSpacing,
+    marginBottom: spacing.sm,
+    maxWidth: 340,
+  },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",

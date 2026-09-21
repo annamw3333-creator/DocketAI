@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import json
 from typing import Any
 
 import httpx
@@ -16,11 +17,19 @@ from .scoring import DIMENSIONS, aggregate_scores, score_turn
 from .seed import HARBOR_BOT_ID, HAVEN_BOT_ID, seed_demo, seed_haven
 from .simulator import run_pack_on_bot, simulate_reply
 from .packs_loader import list_pack_ids, load_all_packs, load_pack
+from .brand_builder import build_brand_draft, fetch_public_site
+from .themes import (
+    DEFAULT_THEME_ID,
+    list_themes,
+    normalize_theme_config,
+    theme_config_for_storage,
+    theme_from_query_and_bot,
+)
 
 app = FastAPI(
     title="Docket Desk",
     description="Mystery-shop companion API for Docket Assistant (WordPress connector).",
-    version="1.0.0",
+    version="1.3.0",
 )
 
 app.add_middleware(
@@ -51,6 +60,18 @@ class BotCreate(BaseModel):
     script: list[str] = Field(default_factory=list)
     prompt: str = ""
     id: str | None = None
+    theme_id: str | None = None
+    theme: dict[str, Any] | None = None
+
+
+class BrandFromRequest(BaseModel):
+    website_url: str
+    brand_notes: str = ""
+    name: str | None = None
+    vertical: str | None = None
+    create: bool = True  # if false, return draft only without persisting
+    theme_id: str | None = None
+    theme: dict[str, Any] | None = None
 
 
 class MysteryShopRequest(BaseModel):
@@ -76,6 +97,25 @@ class BakeOffRequest(BaseModel):
 class EmbedRequest(BaseModel):
     service_url: str
     bot_id: str
+    theme_id: str | None = None  # optional preview override; else uses bot theme
+
+
+class ThemeUpdate(BaseModel):
+    theme_id: str | None = None
+    primary: str | None = None
+    accent: str | None = None
+    bg: str | None = None
+    text: str | None = None
+    header_text: str | None = None
+    bot_bubble: str | None = None
+    user_bubble: str | None = None
+    launcher_bg: str | None = None
+    launcher_text: str | None = None
+    position: str | None = None  # left | right
+    avatar_style: str | None = None  # monogram | dot | initials | none
+    bot_name: str | None = None
+    display_name: str | None = None
+    greeting: str | None = None
 
 
 class ReplayRequest(BaseModel):
@@ -115,6 +155,10 @@ def api_dimensions() -> dict[str, Any]:
 
 @app.post("/api/bots")
 def create_bot(body: BotCreate) -> dict[str, Any]:
+    theme_body = dict(body.theme or {})
+    if body.theme_id:
+        theme_body["theme_id"] = body.theme_id
+    theme_cfg = theme_config_for_storage(theme_body) if theme_body else {"theme_id": DEFAULT_THEME_ID}
     return storage.create_bot(
         name=body.name,
         vertical=body.vertical,
@@ -122,7 +166,56 @@ def create_bot(body: BotCreate) -> dict[str, Any]:
         script=body.script,
         prompt=body.prompt,
         bot_id=body.id,
+        theme=theme_cfg,
     )
+
+
+@app.post("/api/bots/from-brand")
+async def bots_from_brand(body: BrandFromRequest) -> dict[str, Any]:
+    """Fetch a public website (SSRF-safe) and create a draft bot.
+
+    Draft system prompt + FAQ are deterministic templates labeled as draft.
+    No external LLM is called.
+    """
+    try:
+        site = await fetch_public_site(body.website_url)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    draft = build_brand_draft(
+        website_url=body.website_url,
+        brand_notes=body.brand_notes or "",
+        site=site,
+    )
+    if body.name:
+        draft["name"] = body.name.strip()[:80]
+    if body.vertical:
+        draft["vertical"] = body.vertical.strip()[:40]
+
+    if not body.create:
+        return {"draft": draft, "bot": None, "created": False}
+
+    theme_body = dict(body.theme or {})
+    if body.theme_id:
+        theme_body["theme_id"] = body.theme_id
+    theme_cfg = theme_config_for_storage(theme_body) if theme_body else {"theme_id": DEFAULT_THEME_ID}
+
+    bot = storage.create_bot(
+        name=draft["name"],
+        vertical=draft["vertical"],
+        faq=draft["faq"],
+        script=draft["script"],
+        prompt=draft["prompt"],
+        bot_id=draft.get("bot_id_suggestion"),
+        theme=theme_cfg,
+    )
+    return {
+        "draft": draft,
+        "bot": bot,
+        "created": True,
+        "label": "draft",
+        "note": "Prompt and FAQ are draft templates extracted from the public site — review before production use.",
+    }
 
 
 @app.get("/api/bots")
@@ -136,6 +229,39 @@ def get_bot(bot_id: str) -> dict[str, Any]:
     if not bot:
         raise HTTPException(404, "bot not found")
     return bot
+
+
+@app.get("/api/themes")
+def api_themes() -> dict[str, Any]:
+    """List Theme Studio presets with preview metadata (name, description, swatches)."""
+    themes = list_themes()
+    return {
+        "themes": themes,
+        "default_theme_id": DEFAULT_THEME_ID,
+        "count": len(themes),
+    }
+
+
+@app.patch("/api/bots/{bot_id}/theme")
+def patch_bot_theme(bot_id: str, body: ThemeUpdate) -> dict[str, Any]:
+    bot = storage.get_bot(bot_id)
+    if not bot:
+        raise HTTPException(404, "bot not found")
+    # Merge onto existing compact config
+    existing = dict(bot.get("theme_config") or {})
+    payload = body.model_dump(exclude_none=True)
+    existing.update(payload)
+    if "theme_id" not in existing:
+        existing["theme_id"] = (bot.get("theme") or {}).get("theme_id") or DEFAULT_THEME_ID
+    theme_cfg = theme_config_for_storage(existing)
+    updated = storage.update_bot_theme(bot_id, theme_cfg)
+    if not updated:
+        raise HTTPException(404, "bot not found")
+    return {
+        "bot": updated,
+        "theme": updated.get("theme"),
+        "theme_config": theme_cfg,
+    }
 
 
 @app.post("/api/seed")
@@ -166,6 +292,7 @@ async def mystery_shop(body: MysteryShopRequest) -> dict[str, Any]:
         transcript=result["transcript"],
         diff=result["diff"],
         patches=result["patches"],
+        scenarios=result.get("scenarios") or [],
     )
     alert = await maybe_alert_score_drop(
         title=f"{bot['name']} / {pack['id']}",
@@ -185,6 +312,7 @@ async def mystery_shop(body: MysteryShopRequest) -> dict[str, Any]:
         "diff": result["diff"],
         "patches": result["patches"],
         "scenarios": result["scenarios"],
+        "failures": result.get("failures") or [],
         "alert": alert,
     }
 
@@ -388,82 +516,195 @@ async def bakeoff(body: BakeOffRequest) -> dict[str, Any]:
 # ---------- embed snippet ----------
 
 
-@app.post("/api/embed-snippet")
-def embed_snippet(body: EmbedRequest) -> dict[str, Any]:
-    service = body.service_url.rstrip("/")
-    bot_id = body.bot_id
+def _build_embed_snippet(service: str, bot_id: str, theme: dict[str, Any]) -> str:
+    """Ready-to-paste script that loads the themed widget iframe + launcher."""
+    pos = theme.get("position") or "right"
+    side = "left" if pos == "left" else "right"
+    launcher_bg = theme.get("launcher_bg") or theme.get("primary") or "#161513"
+    launcher_text = theme.get("launcher_text") or theme.get("header_text") or "#eceae4"
+    accent = theme.get("accent") or "#C9A227"
     widget = f"{service}/widget/{bot_id}"
-    snippet = f"""<!-- Docket Assistant embed -->
-<div id="docket-assistant-root" data-bot="{html.escape(bot_id)}"></div>
+    label = str(theme.get("bot_name") or "Chat")[:40]
+    label_js = json.dumps(label)
+    return f"""<!-- Docket Assistant embed · theme={html.escape(str(theme.get('theme_id') or theme.get('id') or ''))} -->
+<div id="docket-assistant-root" data-bot="{html.escape(bot_id)}" data-theme="{html.escape(str(theme.get('theme_id') or ''))}"></div>
 <iframe id="docket-assistant-frame" src="{html.escape(widget)}" title="Chat"
   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
   referrerpolicy="no-referrer"
-  style="display:none;position:fixed;right:16px;bottom:84px;width:360px;height:520px;border:0;border-radius:16px;z-index:2147483647;"></iframe>
+  style="display:none;position:fixed;{side}:16px;bottom:84px;width:360px;height:520px;border:0;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:2147483647;"></iframe>
 <script>
 (function(){{
   var f=document.getElementById('docket-assistant-frame');
   var b=document.createElement('button');
-  b.type='button'; b.textContent='Chat';
-  b.style.cssText='position:fixed;right:16px;bottom:16px;padding:12px 16px;border:0;border-radius:28px;background:#161513;color:#eceae4;z-index:2147483647;cursor:pointer';
+  b.type='button'; b.setAttribute('aria-label','Open chat');
+  b.textContent={label_js};
+  b.style.cssText='position:fixed;{side}:16px;bottom:16px;padding:12px 18px;border:0;border-radius:28px;background:{html.escape(launcher_bg)};color:{html.escape(launcher_text)};box-shadow:0 4px 16px rgba(0,0,0,.2);font:600 14px system-ui,sans-serif;z-index:2147483647;cursor:pointer;outline:2px solid transparent;';
+  b.onmouseenter=function(){{b.style.outlineColor='{html.escape(accent)}';}};
+  b.onmouseleave=function(){{b.style.outlineColor='transparent';}};
   var open=false;
-  b.onclick=function(){{open=!open;f.style.display=open?'block':'none';}};
+  b.onclick=function(){{open=!open;f.style.display=open?'block':'none';b.setAttribute('aria-expanded',open?'true':'false');}};
   document.body.appendChild(b);
 }})();
 </script>"""
-    return {"snippet": snippet, "widget_url": widget}
 
 
-# ---------- widget stub (for WP iframe demos) ----------
-
-
-@app.get("/widget/{bot_id}", response_class=HTMLResponse)
-def widget(bot_id: str) -> HTMLResponse:
-    """Chat widget for any bot id (e.g. haven-abodes, harbor-hearth)."""
+@app.post("/api/embed-snippet")
+def embed_snippet(body: EmbedRequest) -> dict[str, Any]:
+    service = body.service_url.rstrip("/")
+    bot_id = body.bot_id
     bot = storage.get_bot(bot_id)
-    display = (bot["name"] if bot else bot_id) or bot_id
-    # Bubble short name: first token before · or full display
+    theme = theme_from_query_and_bot(bot, theme_id=body.theme_id)
+    widget = f"{service}/widget/{bot_id}"
+    snippet = _build_embed_snippet(service, bot_id, theme)
+    return {
+        "snippet": snippet,
+        "widget_url": widget,
+        "theme": theme,
+        "bot_id": bot_id,
+        "steps": {
+            "any_html": "Paste the snippet before </body> on any page.",
+            "wordpress": "Appearance → Theme File Editor (or a Custom HTML block / WPCode) → paste before </body>.",
+            "squarespace": "Settings → Advanced → Code Injection → Footer → paste snippet.",
+        },
+    }
+
+
+@app.get("/api/bots/{bot_id}/embed")
+def get_bot_embed(
+    bot_id: str,
+    service_url: str | None = None,
+) -> dict[str, Any]:
+    bot = storage.get_bot(bot_id)
+    if not bot:
+        raise HTTPException(404, "bot not found")
+    service = (service_url or settings.public_base_url).rstrip("/")
+    theme = normalize_theme_config(bot.get("theme_config") or bot.get("theme") or {})
+    widget = f"{service}/widget/{bot_id}"
+    return {
+        "snippet": _build_embed_snippet(service, bot_id, theme),
+        "widget_url": widget,
+        "theme": theme,
+        "bot_id": bot_id,
+        "steps": {
+            "any_html": "Paste the snippet before </body> on any page.",
+            "wordpress": "Appearance → Theme File Editor (or a Custom HTML block / WPCode) → paste before </body>.",
+            "squarespace": "Settings → Advanced → Code Injection → Footer → paste snippet.",
+        },
+    }
+
+
+# ---------- widget (themed chat panel) ----------
+
+
+def _widget_html(bot_id: str, bot: dict[str, Any] | None, theme: dict[str, Any]) -> str:
+    display = theme.get("display_name") or theme.get("bot_name")
+    if not display:
+        display = (bot["name"] if bot else bot_id) or bot_id
     bubble = display.split("·")[0].strip() if "·" in display else display
-    if bot_id == HAVEN_BOT_ID:
+    if bot_id == HAVEN_BOT_ID and not theme.get("bot_name") and not theme.get("display_name"):
         bubble = "Haven"
         display = "Haven · Aesthetic Abodes"
-    greeting = "Hi — ask about hours, bookings, or policies."
-    if bot and bot.get("script"):
-        greeting = bot["script"][0]
-    name = html.escape(display)
-    bubble_esc = html.escape(bubble)
-    greet_esc = html.escape(greeting)
-    return HTMLResponse(
-        f"""<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"/><title>{name}</title>
+    greeting = theme.get("greeting")
+    if not greeting:
+        greeting = "Hi — ask about hours, bookings, or policies."
+        if bot and bot.get("script"):
+            greeting = bot["script"][0]
+    name = html.escape(str(display))
+    bubble_esc = html.escape(str(bubble))
+    avatar = theme.get("avatar_style") or "monogram"
+    initial = html.escape((bubble.strip()[:1] or "D").upper())
+    if avatar == "dot":
+        avatar_html = '<span class="avatar avatar-dot" aria-hidden="true"></span>'
+    elif avatar == "none":
+        avatar_html = ""
+    elif avatar == "initials":
+        avatar_html = f'<span class="avatar avatar-initials" aria-hidden="true">{initial}</span>'
+    else:
+        avatar_html = f'<span class="avatar avatar-mono" aria-hidden="true">{initial}</span>'
+
+    css_vars = f"""--docket-primary:{html.escape(theme.get('primary','#161513'))};
+--docket-accent:{html.escape(theme.get('accent','#C9A227'))};
+--docket-bg:{html.escape(theme.get('bg','#ECEAE4'))};
+--docket-text:{html.escape(theme.get('text','#161513'))};
+--docket-header-text:{html.escape(theme.get('header_text','#ECEAE4'))};
+--docket-bot-bubble:{html.escape(theme.get('bot_bubble','#DDD6C8'))};
+--docket-user-bubble:{html.escape(theme.get('user_bubble','#FFFFFF'))};"""
+
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>{name}</title>
 <style>
-body{{font-family:system-ui,sans-serif;margin:0;background:#eceae4;color:#161513;display:flex;flex-direction:column;height:100vh}}
-header{{padding:12px 16px;background:#161513;color:#eceae4;font-weight:600}}
-header small{{display:block;font-weight:400;opacity:.75;font-size:.8rem;margin-top:2px}}
-#log{{flex:1;overflow:auto;padding:12px}}
-.msg{{margin:8px 0;padding:8px 10px;border-radius:10px;max-width:90%}}
-.user{{background:#fff;align-self:flex-end;margin-left:auto}}
-.bot{{background:#ddd6c8}}
-form{{display:flex;gap:8px;padding:12px;border-top:1px solid #ccc}}
-input{{flex:1;padding:8px;border-radius:8px;border:1px solid #bbb}}
-button{{padding:8px 14px;border:0;border-radius:8px;background:#161513;color:#eceae4}}
+:root{{{css_vars}}}
+*{{box-sizing:border-box}}
+body{{font-family:system-ui,-apple-system,sans-serif;margin:0;background:var(--docket-bg);color:var(--docket-text);display:flex;flex-direction:column;height:100vh}}
+header{{padding:12px 16px;background:var(--docket-primary);color:var(--docket-header-text);font-weight:600;display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--docket-accent)}}
+header .titles{{flex:1;min-width:0}}
+header small{{display:block;font-weight:400;opacity:.8;font-size:.78rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.avatar{{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}}
+.avatar-mono,.avatar-initials{{background:var(--docket-accent);color:var(--docket-primary)}}
+.avatar-dot{{background:var(--docket-accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--docket-accent) 35%, transparent)}}
+#log{{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column}}
+.msg{{margin:8px 0;padding:8px 10px;border-radius:10px;max-width:90%;line-height:1.35;font-size:14px}}
+.user{{background:var(--docket-user-bubble);align-self:flex-end;margin-left:auto;border:1px solid color-mix(in srgb, var(--docket-text) 12%, transparent)}}
+.bot{{background:var(--docket-bot-bubble);align-self:flex-start}}
+form{{display:flex;gap:8px;padding:12px;border-top:1px solid color-mix(in srgb, var(--docket-text) 15%, transparent);background:color-mix(in srgb, var(--docket-bg) 92%, var(--docket-primary))}}
+input{{flex:1;padding:10px 12px;border-radius:8px;border:1px solid color-mix(in srgb, var(--docket-text) 20%, transparent);background:#fff;color:var(--docket-text);font:inherit}}
+button{{padding:10px 14px;border:0;border-radius:8px;background:var(--docket-primary);color:var(--docket-header-text);font-weight:600;cursor:pointer}}
+button:hover{{outline:2px solid var(--docket-accent);outline-offset:1px}}
+.theme-tag{{position:absolute;top:8px;right:8px;font-size:10px;opacity:.45;color:var(--docket-header-text)}}
 </style></head><body>
-<header>{bubble_esc}<small>{name}</small></header>
+<header>
+{avatar_html}
+<div class="titles">{bubble_esc}<small>{name}</small></div>
+<span class="theme-tag" data-theme-id="{html.escape(str(theme.get('theme_id') or theme.get('id') or ''))}">{html.escape(str(theme.get('theme_id') or theme.get('id') or ''))}</span>
+</header>
 <div id="log"></div>
-<form id="f"><input id="m" placeholder="Message…" autocomplete="off"/><button>Send</button></form>
+<form id="f"><input id="m" placeholder="Message…" autocomplete="off"/><button type="submit">Send</button></form>
 <script>
-const botId={html.escape(repr(bot_id))};
+const botId={json.dumps(bot_id)};
 const log=document.getElementById('log');
 function add(cls,t){{const d=document.createElement('div');d.className='msg '+cls;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;}}
 document.getElementById('f').onsubmit=async(e)=>{{
   e.preventDefault();
   const v=document.getElementById('m').value.trim(); if(!v)return;
   document.getElementById('m').value=''; add('user',v);
-  const r=await fetch('/api/chat/'+encodeURIComponent(botId),{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{message:v}})}});
-  const j=await r.json(); add('bot', j.reply||'…');
+  try{{
+    const r=await fetch('/api/chat/'+encodeURIComponent(botId),{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{message:v}})}});
+    const j=await r.json(); add('bot', j.reply||'…');
+  }}catch(err){{ add('bot','Sorry — chat is temporarily unavailable.'); }}
 }};
-add('bot',{html.escape(repr(greeting))});
+add('bot',{json.dumps(greeting)});
 </script></body></html>"""
+
+
+@app.get("/widget/{bot_id}", response_class=HTMLResponse)
+def widget(
+    bot_id: str,
+    theme: str | None = Query(None, description="Preset theme_id override"),
+    primary: str | None = None,
+    accent: str | None = None,
+    bg: str | None = None,
+    text: str | None = None,
+    position: str | None = None,
+    avatar_style: str | None = None,
+    bot_name: str | None = None,
+    greeting: str | None = None,
+) -> HTMLResponse:
+    """Themed chat widget. Chat posts to /api/chat/{bot_id} immediately."""
+    bot = storage.get_bot(bot_id)
+    resolved = theme_from_query_and_bot(
+        bot,
+        theme_id=theme,
+        primary=primary,
+        accent=accent,
+        bg=bg,
+        text=text,
+        position=position,
+        avatar_style=avatar_style,
+        bot_name=bot_name,
+        greeting=greeting,
     )
+    return HTMLResponse(_widget_html(bot_id, bot, resolved))
 
 
 class ChatBody(BaseModel):
@@ -513,4 +754,6 @@ def root() -> dict[str, Any]:
         "haven_bot": HAVEN_BOT_ID,
         "widget": f"/widget/{HARBOR_BOT_ID}",
         "haven_widget": f"/widget/{HAVEN_BOT_ID}",
+        "themes": "/api/themes",
+        "version": "1.3.0",
     }

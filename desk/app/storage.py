@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from .config import settings
+from .themes import DEFAULT_THEME_ID, normalize_theme_config
 
 
 def _utc_now() -> str:
@@ -39,6 +40,7 @@ def init_db() -> None:
                 transcript_json TEXT NOT NULL,
                 diff_json TEXT NOT NULL DEFAULT '{}',
                 patches_json TEXT NOT NULL DEFAULT '[]',
+                scenarios_json TEXT NOT NULL DEFAULT '[]',
                 created_at TEXT NOT NULL,
                 FOREIGN KEY (bot_id) REFERENCES bots(id)
             );
@@ -56,6 +58,16 @@ def init_db() -> None:
             );
             """
         )
+        cols_runs = {r[1] for r in conn.execute("PRAGMA table_info(runs)").fetchall()}
+        if "scenarios_json" not in cols_runs:
+            conn.execute(
+                "ALTER TABLE runs ADD COLUMN scenarios_json TEXT NOT NULL DEFAULT '[]'"
+            )
+        cols_bots = {r[1] for r in conn.execute("PRAGMA table_info(bots)").fetchall()}
+        if "theme_json" not in cols_bots:
+            conn.execute(
+                "ALTER TABLE bots ADD COLUMN theme_json TEXT NOT NULL DEFAULT '{}'"
+            )
 
 
 @contextmanager
@@ -75,6 +87,22 @@ def row_to_dict(row: sqlite3.Row | None) -> dict[str, Any] | None:
     return dict(row)
 
 
+def _bot_from_row(row: sqlite3.Row) -> dict[str, Any]:
+    d = dict(row)
+    d["faq"] = json.loads(d.pop("faq_json"))
+    d["script"] = json.loads(d.pop("script_json"))
+    raw_theme = d.pop("theme_json", None) or "{}"
+    try:
+        stored = json.loads(raw_theme) if raw_theme else {}
+    except json.JSONDecodeError:
+        stored = {}
+    if not isinstance(stored, dict):
+        stored = {}
+    d["theme"] = normalize_theme_config(stored)
+    d["theme_config"] = stored  # compact stored overrides
+    return d
+
+
 def create_bot(
     name: str,
     vertical: str,
@@ -82,14 +110,38 @@ def create_bot(
     script: list[str],
     prompt: str = "",
     bot_id: str | None = None,
+    theme: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     bid = bot_id or str(uuid.uuid4())
+    theme_cfg = theme or {"theme_id": DEFAULT_THEME_ID}
     with connect() as conn:
         conn.execute(
-            "INSERT OR REPLACE INTO bots (id, name, vertical, faq_json, script_json, prompt, created_at) VALUES (?,?,?,?,?,?,?)",
-            (bid, name, vertical, json.dumps(faq), json.dumps(script), prompt, _utc_now()),
+            """INSERT OR REPLACE INTO bots
+               (id, name, vertical, faq_json, script_json, prompt, created_at, theme_json)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            (
+                bid,
+                name,
+                vertical,
+                json.dumps(faq),
+                json.dumps(script),
+                prompt,
+                _utc_now(),
+                json.dumps(theme_cfg),
+            ),
         )
     return get_bot(bid)  # type: ignore[return-value]
+
+
+def update_bot_theme(bot_id: str, theme_cfg: dict[str, Any]) -> dict[str, Any] | None:
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE bots SET theme_json=? WHERE id=?",
+            (json.dumps(theme_cfg), bot_id),
+        )
+        if cur.rowcount == 0:
+            return None
+    return get_bot(bot_id)
 
 
 def get_bot(bot_id: str) -> dict[str, Any] | None:
@@ -97,22 +149,13 @@ def get_bot(bot_id: str) -> dict[str, Any] | None:
         row = conn.execute("SELECT * FROM bots WHERE id=?", (bot_id,)).fetchone()
     if not row:
         return None
-    d = dict(row)
-    d["faq"] = json.loads(d.pop("faq_json"))
-    d["script"] = json.loads(d.pop("script_json"))
-    return d
+    return _bot_from_row(row)
 
 
 def list_bots() -> list[dict[str, Any]]:
     with connect() as conn:
         rows = conn.execute("SELECT * FROM bots ORDER BY created_at DESC").fetchall()
-    out = []
-    for row in rows:
-        d = dict(row)
-        d["faq"] = json.loads(d.pop("faq_json"))
-        d["script"] = json.loads(d.pop("script_json"))
-        out.append(d)
-    return out
+    return [_bot_from_row(row) for row in rows]
 
 
 def save_run(
@@ -122,13 +165,14 @@ def save_run(
     transcript: list[dict[str, str]],
     diff: dict[str, Any],
     patches: list[str],
+    scenarios: list[dict[str, Any]] | None = None,
     scenario_id: str | None = None,
 ) -> dict[str, Any]:
     rid = str(uuid.uuid4())
     with connect() as conn:
         conn.execute(
-            """INSERT INTO runs (id, bot_id, pack_id, scenario_id, scores_json, transcript_json, diff_json, patches_json, created_at)
-               VALUES (?,?,?,?,?,?,?,?,?)""",
+            """INSERT INTO runs (id, bot_id, pack_id, scenario_id, scores_json, transcript_json, diff_json, patches_json, scenarios_json, created_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
             (
                 rid,
                 bot_id,
@@ -138,6 +182,7 @@ def save_run(
                 json.dumps(transcript),
                 json.dumps(diff),
                 json.dumps(patches),
+                json.dumps(scenarios or []),
                 _utc_now(),
             ),
         )
@@ -154,6 +199,7 @@ def get_run(run_id: str) -> dict[str, Any] | None:
     d["transcript"] = json.loads(d.pop("transcript_json"))
     d["diff"] = json.loads(d.pop("diff_json"))
     d["patches"] = json.loads(d.pop("patches_json"))
+    d["scenarios"] = json.loads(d.pop("scenarios_json") or "[]")
     return d
 
 
@@ -175,6 +221,8 @@ def list_runs(bot_id: str | None = None, limit: int = 50) -> list[dict[str, Any]
         d["transcript"] = json.loads(d.pop("transcript_json"))
         d["diff"] = json.loads(d.pop("diff_json"))
         d["patches"] = json.loads(d.pop("patches_json"))
+        raw_sc = d.pop("scenarios_json", "[]") or "[]"
+        d["scenarios"] = json.loads(raw_sc)
         out.append(d)
     return out
 
